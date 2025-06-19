@@ -2,55 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Rich Kid's Scripts 💻✨</title>
+    <title>richkidscripts terminal 💾</title>
     <style>
         body {
-            font-family: "Comic Sans MS", cursive, sans-serif;
-            background: linear-gradient(to right, #1e1e2f, #2a2a40);
-            color: #fff;
+            background-color: #0e0e0e;
+            color: #a8ff60;
+            font-family: Menlo, Consolas, monospace;
             padding: 2rem;
+            line-height: 1.5;
         }
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+        .terminal {
+            border: 2px solid #333;
+            padding: 1rem;
+            border-radius: 5px;
+            background-color: #1a1a1a;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .prompt {
+            color: #66d9ef;
         }
         .script {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 1rem;
             margin-bottom: 1.5rem;
         }
-        .script h2 {
-            margin: 0;
-            font-size: 1.5rem;
-        }
-        .script p {
-            margin: 0.5rem 0 1rem;
-            color: #ccc;
-        }
-        .button {
-            padding: 0.5rem 1rem;
-            background-color: #ff69b4;
-            color: black;
-            border: none;
-            border-radius: 5px;
+        a {
+            color: #a6e22e;
             text-decoration: none;
-            font-weight: bold;
         }
-        .button:hover {
-            background-color: hotpink;
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <h1>🛠️ Rich Kid Script Boutique™</h1>
-
-    {% for script in scripts %}
-    <div class="script">
-        <h2>{{ script.title }}</h2>
-        <p>{{ script.description }}</p>
-        <a href="/grab/{{ script.filename }}" class="button">Download</a>
+    <div class="terminal">
+        <div class="script">
+            <div class="prompt">➜ richkidscripts % ls</div>
+            {% for script in scripts %}
+                <div>
+                    <span class="prompt">➜ richkidscripts %</span> 
+                    <strong>{{ script.title }}</strong><br>
+                    <span style="color:#999">{{ script.description }}</span><br>
+                    <a href="/grab/{{ script.filename }}">./{{ script.filename }}</a>
+                </div>
+                <br>
+            {% endfor %}
+        </div>
     </div>
-    {% endfor %}
 </body>
 </html>
