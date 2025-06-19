@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Max's Script Server 💻✨</title>
+    <style>
+        body {
+            font-family: "Comic Sans MS", cursive, sans-serif;
+            background: linear-gradient(to right, #1e1e2f, #2a2a40);
+            color: #fff;
+            padding: 2rem;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        .script {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .script h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .script p {
+            margin: 0.5rem 0 1rem;
+            color: #ccc;
+        }
+        .button {
+            padding: 0.5rem 1rem;
+            background-color: #ff69b4;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: hotpink;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛠️ Max's Rich Kid Script Boutique™</h1>
+
+    {% for script in scripts %}
+    <div class="script">
+        <h2>{{ script.title }}</h2>
+        <p>{{ script.description }}</p>
+        <a href="/grab/{{ script.filename }}" class="button">Download</a>
+    </div>
+    {% endfor %}
+</body>
+</html>
