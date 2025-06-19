@@ -11,9 +11,9 @@ scripts = [
         "description": "Diagnose why your puter had a mental breakdown 💀",
     },
     {
-        "filename": "SlayStartupScript.sh",
-        "title": "Slay Startup Script",
-        "description": "Makes your Mac start up with ✨vibes✨. Also does cleanup.",
+        "filename": "I_See_You.sh",
+        "title": "I See You! Script",
+        "description": "Whispering voice speaks out of no where and the Camera app is opened unnanounced! Use this script to scare friends!.",
     },
     # Add more here!
 ]
