@@ -2,51 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>MAXNET - Rich Kid Scripts Mainframe </title>
+    <title>MAXNET - Script Mainframe 🖥️</title>
     <style>
         body {
+            margin: 0;
+            padding: 2rem;
+            font-family: "Courier New", Courier, monospace;
             background-color: #000;
             color: #33ff33;
-            font-family: "Courier New", Courier, monospace;
-            padding: 2rem;
-            animation: scanline 5s infinite;
         }
-        h1 {
-            color: #33ff33;
-            text-shadow: 0 0 10px #33ff33;
-            font-size: 2rem;
+
+        .hidden {
+            display: none;
         }
+
         .terminal-box {
             background-color: #111;
             border: 2px solid #33ff33;
             padding: 1rem;
             border-radius: 5px;
-            margin-bottom: 2rem;
             box-shadow: 0 0 20px #33ff33;
+            max-width: 800px;
+            margin: 2rem auto;
         }
+
         .script {
             margin-bottom: 1.5rem;
         }
-        .prompt {
-            color: #00ffcc;
-        }
+
         a {
             color: #33ffff;
             text-decoration: none;
         }
+
         a:hover {
             text-decoration: underline;
         }
-        @keyframes scanline {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 100px; }
+
+        .hacker-mode {
+            background-color: #1a0000;
+            color: #ff4444;
+        }
+
+        #toggleButton {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #111;
+            border: 2px solid #33ff33;
+            color: #33ff33;
+            padding: 5px 10px;
+            font-weight: bold;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h1>MAXNET: Welcome to the Script Mainframe</h1>
-    <div class="terminal-box">
-        <p class="prompt">> Accessing available scripts...</p>
+    <button id="toggleButton">Toggle Hacker Mode</button>
+
+    <div id="bootup">
+        <p>BOOTING MAXNET...</p>
+        <p>Loading script archives ██████████ 100%</p>
+        <p>Establishing secure shell 🔐</p>
+        <p>Access granted. Welcome, Max.</p>
+    </div>
+
+    <div class="terminal-box hidden" id="mainContent">
+        <p><strong>📁 Available Scripts:</strong></p>
         {% for script in scripts %}
         <div class="script">
             <p><strong>{{ script.title }}</strong></p>
@@ -55,5 +77,39 @@
         </div>
         {% endfor %}
     </div>
+
+    <!-- 🎧 Lo-fi BGM -->
+    <audio autoplay loop id="bgMusic" class="hidden">
+        <source src="https://cdn.pixabay.com/audio/2022/03/24/audio_22606a3e07.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // 🔓 Boot-up animation
+        setTimeout(() => {
+            document.getElementById('bootup').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('bgMusic').classList.remove('hidden');
+        }, 4000); // 4 seconds boot-up
+
+        // 🧨 Hacker mode toggle
+        const toggleBtn = document.getElementById("toggleButton");
+        toggleBtn.addEventListener("click", () => {
+            document.body.classList.toggle("hacker-mode");
+        });
+
+        // 🕹️ Konami Code: ↑ ↑ ↓ ↓ ← → ← → B A
+        const konami = [38,38,40,40,37,39,37,39,66,65];
+        let input = [];
+
+        document.addEventListener("keydown", (e) => {
+            input.push(e.keyCode);
+            if (input.length > konami.length) input.shift();
+            if (JSON.stringify(input) === JSON.stringify(konami)) {
+                alert("🧠 You've unlocked GOD MODE!");
+                document.body.style.backgroundColor = "#000020";
+                document.body.style.color = "#00ffff";
+            }
+        });
+    </script>
 </body>
 </html>
