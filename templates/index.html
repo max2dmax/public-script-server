@@ -60,11 +60,11 @@
 <body>
     <button id="toggleButton">Toggle Hacker Mode</button>
 
-    <div id="bootup">
-        <p>BOOTING MAXNET...</p>
-        <p>Loading script archives ██████████ 100%</p>
-        <p>Establishing secure shell 🔐</p>
-        <p>Access granted. Welcome, Max.</p>
+    <div id="bootup" class="terminal-box">
+        <p id="line1" class="hidden">BOOTING MAXNET...</p>
+        <p id="line2" class="hidden">Loading script archives ██████████ 100%</p>
+        <p id="line3" class="hidden">Establishing secure shell 🔐</p>
+        <p id="line4" class="hidden">Access granted. Welcome, Max.</p>
     </div>
 
     <div class="terminal-box hidden" id="mainContent">
@@ -84,32 +84,24 @@
     </audio>
 
     <script>
-        // 🔓 Boot-up animation
-        setTimeout(() => {
-            document.getElementById('bootup').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('bgMusic').classList.remove('hidden');
-        }, 4000); // 4 seconds boot-up
-
-        // 🧨 Hacker mode toggle
-        const toggleBtn = document.getElementById("toggleButton");
-        toggleBtn.addEventListener("click", () => {
-            document.body.classList.toggle("hacker-mode");
-        });
-
-        // 🕹️ Konami Code: ↑ ↑ ↓ ↓ ← → ← → B A
-        const konami = [38,38,40,40,37,39,37,39,66,65];
-        let input = [];
-
-        document.addEventListener("keydown", (e) => {
-            input.push(e.keyCode);
-            if (input.length > konami.length) input.shift();
-            if (JSON.stringify(input) === JSON.stringify(konami)) {
-                alert("🧠 You've unlocked GOD MODE!");
-                document.body.style.backgroundColor = "#000020";
-                document.body.style.color = "#00ffff";
+        // Fancy boot-up animation
+        const lines = ['line1', 'line2', 'line3', 'line4'];
+        let index = 0;
+    
+        function showNextLine() {
+            if (index < lines.length) {
+                document.getElementById(lines[index]).classList.remove('hidden');
+                index++;
+                setTimeout(showNextLine, 900); // Time between lines
+            } else {
+                // After all lines, show main content + music
+                document.getElementById('bootup').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                document.getElementById('bgMusic').classList.remove('hidden');
             }
-        });
+        }
+    
+        setTimeout(showNextLine, 500); // Delay before first line
     </script>
 </body>
 </html>
