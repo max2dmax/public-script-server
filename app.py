@@ -3,7 +3,6 @@ import os
 
 app = Flask(__name__)
 
-# List of scripts
 scripts = [
     {
         "filename": "WhyDidMyPuterCrashScript.sh",
@@ -15,7 +14,16 @@ scripts = [
         "title": "I See You! Script",
         "description": "Whispering voice speaks out of no where and the Camera app is opened unnanounced! Use this script to scare friends!.",
     },
-    # Add more here!
+    {
+        "filename": "Sorting_Hat",
+        "title": "Sorting Hat",
+        "description": "Do you have a folder of Misc. stuff that you need organized? Use this script to create folders by file extenstion! Sure, you can sort by type but whats the fun in that when you could run a scipt to do it for you! .",
+    },
+    {
+        "filename": "Batman_Mode.sh",
+        "title": "Batman Mode Script",
+        "description": "Use Batman Mode to enable dark mode on your machine! Dont be  noob and change it in your system settings!",
+    }
 ]
 
 @app.route('/')
