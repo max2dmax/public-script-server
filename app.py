@@ -23,6 +23,11 @@ scripts = [
         "filename": "Batman_Mode.sh",
         "title": "Batman Mode Script",
         "description": "Use Batman Mode to enable dark mode on your machine! Dont be  noob and change it in your system settings!",
+    },
+    {
+        "filename": "For_Rich_Kid_Martin.sh",
+        "title": "Rich Kid Martin's Script",
+        "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
     }
 ]
 
