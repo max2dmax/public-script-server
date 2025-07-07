@@ -30,9 +30,9 @@ scripts = [
         "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
     },
     {
-        "filename": "FutureScrip.sh",
-        "title": "Rich Kid Martin's Script",
-        "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
+        "filename": "Hacker_Mode.sh",
+        "title": "Hacker Mode",
+        "description": "Try it and see what happens!",
     },
     {
         "filename": "FutureScript.sh",
