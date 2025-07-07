@@ -15,7 +15,7 @@ scripts = [
         "description": "Whispering voice speaks out of no where and the Camera app is opened unnanounced! Use this script to scare friends!.",
     },
     {
-        "filename": "Sorting_Hat",
+        "filename": "Sorting_Hat.sh",
         "title": "Sorting Hat",
         "description": "Do you have a folder of Misc. stuff that you need organized? Use this script to create folders by file extenstion! Sure, you can sort by type but whats the fun in that when you could run a scipt to do it for you! .",
     },
