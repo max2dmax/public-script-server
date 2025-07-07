@@ -44,6 +44,7 @@ scripts = [
         "title": "Rich Kid Martin's Script",
         "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
     }
+]
 
 
 @app.route('/')
