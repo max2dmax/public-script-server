@@ -127,6 +127,12 @@
         }
     
         setTimeout(showNextLine, 500); // Delay before first line
+
+        // Toggle Hacker Mode
+        const toggleButton = document.getElementById('toggleButton');
+        toggleButton.addEventListener('click', () => {
+            document.body.classList.toggle('hacker-mode');
+        });
     </script>
 </body>
 </html>
