@@ -44,6 +44,17 @@
             color: #ff4444;
         }
 
+        @keyframes redAlertFlash {
+            0%, 100% { background-color: #8b0000; }
+            50% { background-color: #ff0000; }
+        }
+
+        .red-alert-mode {
+            background-color: #8b0000;
+            color: #ff0000;
+            animation: redAlertFlash 1s infinite;
+        }
+
         #toggleButton {
             position: fixed;
             top: 10px;
@@ -59,6 +70,10 @@
 </head>
 <body>
     <button id="toggleButton">Toggle Hacker Mode</button>
+
+    <audio id="alarm" class="hidden">
+        <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_6ecf8fbcf1.mp3" type="audio/mpeg">
+    </audio>
 
     <div id="bootup" class="terminal-box">
         <p id="line1" class="hidden">BOOTING MAXNET...</p>
@@ -128,10 +143,30 @@
     
         setTimeout(showNextLine, 500); // Delay before first line
 
-        // Toggle Hacker Mode
+        // Toggle Hacker Mode / Red Alert Mode
         const toggleButton = document.getElementById('toggleButton');
+        const alarm = document.getElementById('alarm');
         toggleButton.addEventListener('click', () => {
-            document.body.classList.toggle('hacker-mode');
+            // If already in red alert, turn off red alert
+            if (document.body.classList.contains('red-alert-mode')) {
+                document.body.classList.remove('red-alert-mode');
+                alarm.pause();
+                alarm.currentTime = 0;
+                alarm.classList.add('hidden');
+                // Restore hacker mode if it was on
+                document.body.classList.toggle('hacker-mode');
+                return;
+            }
+            // If not in hacker mode, turn on hacker mode
+            if (!document.body.classList.contains('hacker-mode')) {
+                document.body.classList.add('hacker-mode');
+            } else {
+                // If already in hacker mode, switch to red alert mode
+                document.body.classList.remove('hacker-mode');
+                document.body.classList.add('red-alert-mode');
+                alarm.classList.remove('hidden');
+                alarm.play();
+            }
         });
     </script>
 </body>
