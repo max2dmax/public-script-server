@@ -69,13 +69,38 @@
 
     <div class="terminal-box hidden" id="mainContent">
         <p><strong>📁 Available Scripts:</strong></p>
-        {% for script in scripts %}
-        <div class="script">
-            <p><strong>{{ script.title }}</strong></p>
-            <p>{{ script.description }}</p>
-            <p><a href="/grab/{{ script.filename }}">Download ➤ {{ script.filename }}</a></p>
-        </div>
-        {% endfor %}
+        <details>
+            <summary><strong>🛠️ Functional Scripts</strong></summary>
+            {% for script in scripts if script.category == 'functional' %}
+            <div class="script">
+                <p><strong>{{ script.title }}</strong></p>
+                <p>{{ script.description }}</p>
+                <p><a href="/grab/{{ script.filename }}">Download ➤ {{ script.filename }}</a></p>
+            </div>
+            {% endfor %}
+        </details>
+
+        <details>
+            <summary><strong>🎭 Prank Scripts</strong></summary>
+            {% for script in scripts if script.category == 'prank' %}
+            <div class="script">
+                <p><strong>{{ script.title }}</strong></p>
+                <p>{{ script.description }}</p>
+                <p><a href="/grab/{{ script.filename }}">Download ➤ {{ script.filename }}</a></p>
+            </div>
+            {% endfor %}
+        </details>
+
+        <details>
+            <summary><strong>🧠 Learning Scripts</strong></summary>
+            {% for script in scripts if script.category == 'learning' %}
+            <div class="script">
+                <p><strong>{{ script.title }}</strong></p>
+                <p>{{ script.description }}</p>
+                <p><a href="/grab/{{ script.filename }}">Download ➤ {{ script.filename }}</a></p>
+            </div>
+            {% endfor %}
+        </details>
     </div>
 
     <!-- 🎧 Lo-fi BGM -->

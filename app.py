@@ -8,41 +8,49 @@ scripts = [
         "filename": "WhyDidMyPuterCrashScript.sh",
         "title": "Crash Recovery Script",
         "description": "Diagnose why your puter had a mental breakdown 💀",
+        "category": "functional"
     },
     {
         "filename": "I_See_You.sh",
         "title": "I See You! Script",
         "description": "Whispering voice speaks out of no where and the Camera app is opened unnanounced! Use this script to scare friends!.",
+        "category": "prank"
     },
     {
         "filename": "Sorting_Hat.sh",
         "title": "Sorting Hat",
         "description": "Do you have a folder of Misc. stuff that you need organized? Use this script to create folders by file extenstion! Sure, you can sort by type but whats the fun in that when you could run a scipt to do it for you! .",
+        "category": "functional"
     },
     {
         "filename": "Batman_Mode.sh",
         "title": "Batman Mode Script",
         "description": "Use Batman Mode to enable dark mode on your machine! Dont be  noob and change it in your system settings!",
+        "category": "prank"
     },
     {
         "filename": "For_Rich_Kid_Martin.sh",
         "title": "Rich Kid Martin's Script",
         "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
+        "category": "prank"
     },
     {
         "filename": "Hacker_Mode.sh",
         "title": "Hacker Mode",
         "description": "Try it and see what happens!",
+        "category": "prank"
     },
     {
         "filename": "FutureScript.sh",
         "title": "Rich Kid Martin's Script",
         "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
+        "category": "prank"
     },
     {
         "filename": "FutureScript.sh",
         "title": "Rich Kid Martin's Script",
         "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
+        "category": "prank"
     }
 ]
 
