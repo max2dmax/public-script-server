@@ -44,6 +44,40 @@
             color: #ff4444;
         }
 
+        .midnight-mode {
+            background-color: #1b0b2d;
+            color: #bb99ff;
+        }
+
+        .midnight-mode .terminal-box {
+            border-color: #bb99ff;
+            box-shadow: 0 0 20px #bb99ff;
+        }
+
+        .rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 998;
+        }
+
+        .raindrop {
+            position: absolute;
+            width: 1px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.3);
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
         @keyframes redAlertFlash {
             0%, 100% { background-color: #8b0000; }
             50% { background-color: #ff0000; }
@@ -114,9 +148,13 @@
 </head>
 <body>
     <button id="toggleButton">Toggle Red Alert Mode</button>
+    <button id="midnightToggleButton" style="position: fixed; top: 10px; right: 180px;">Toggle Midnight Mode</button>
 
     <audio id="alarm" class="hidden" preload="auto">
         <source src="{{ url_for('static', filename='audio/Red_Alert.mp3') }}" type="audio/mpeg">
+    </audio>
+    <audio id="midnightMusic" class="hidden" loop preload="auto">
+        <source src="{{ url_for('static', filename='audio/MidnightMode.mp3') }}" type="audio/mpeg">
     </audio>
 
     <div id="bootup" class="terminal-box">
@@ -216,6 +254,7 @@
         <source src="{{ url_for('static', filename='audio/fail.mp3') }}" type="audio/mpeg">
     </audio>
     <div id="flash" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:999;display:none;justify-content:center;align-items:center;font-size:5rem;font-weight:bold;font-family:monospace;color:white;"></div>
+    <div id="rainContainer" class="rain hidden"></div>
 
     <script>
         // Fancy boot-up animation
@@ -364,6 +403,38 @@
                 editorButton.style.display = "none";
             } else {
                 editorButton.style.display = "inline-block";
+            }
+        }
+        // Midnight Mode
+        const midnightToggleButton = document.getElementById("midnightToggleButton");
+        const midnightMusic = document.getElementById("midnightMusic");
+        const rainContainer = document.getElementById("rainContainer");
+
+        midnightToggleButton.addEventListener("click", () => {
+            const isMidnight = document.body.classList.toggle("midnight-mode");
+            rainContainer.classList.toggle("hidden");
+
+            if (isMidnight) {
+                midnightMusic.classList.remove("hidden");
+                midnightMusic.play();
+                generateRain();
+            } else {
+                midnightMusic.pause();
+                midnightMusic.currentTime = 0;
+                midnightMusic.classList.add("hidden");
+                rainContainer.innerHTML = "";
+            }
+        });
+
+        function generateRain() {
+            rainContainer.innerHTML = "";
+            for (let i = 0; i < 100; i++) {
+                const drop = document.createElement("div");
+                drop.classList.add("raindrop");
+                drop.style.left = `${Math.random() * 100}vw`;
+                drop.style.animationDuration = `${Math.random() * 0.5 + 0.75}s`;
+                drop.style.animationDelay = `${Math.random() * 2}s`;
+                rainContainer.appendChild(drop);
             }
         }
     </script>
