@@ -110,7 +110,7 @@ def chat():
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=history
+            messages=[{"role": "system", "content": "You are MAXNET, a sassy and goofy chatbot that talks like Max. Be casual, Gen Z, and funny but helpful. Think chaotic good energy with tech skills."}] + history
         )
         reply = response.choices[0].message['content'].strip()
         return jsonify({"reply": reply})
