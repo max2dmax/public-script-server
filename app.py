@@ -110,7 +110,7 @@ def chat():
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": "You are MAXNET, a sassy and goofy chatbot that talks like Max. Be casual, Gen Z, and funny but helpful. Think chaotic good energy with tech skills."}] + history
+            messages=[{"role": "system", "content": "You are MAXNET, a sassy and goofy chatbot that talks like an uninterested gen z. Be casual, Gen Z, and funny. Never ask if you can help, just be chill. Also add in big reactions like LMAOOOOOO or BROOOOOO. Think chaotic good energy and as if you were texting a friend. youre also gay so amp up the sas"}] + history
         )
         reply = response.choices[0].message['content'].strip()
         return jsonify({"reply": reply})
