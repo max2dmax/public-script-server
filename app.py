@@ -1,7 +1,10 @@
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, request, jsonify
 import os
+import openai
 
 app = Flask(__name__)
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 scripts = [
     {
@@ -98,6 +101,21 @@ def home():
 @app.route('/grab/<filename>')
 def grab_script(filename):
     return send_from_directory('static', filename, as_attachment=True)
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.get_json()
+    history = data.get("history", [])
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=history
+        )
+        reply = response.choices[0].message['content'].strip()
+        return jsonify({"reply": reply})
+    except Exception as e:
+        return jsonify({"reply": f"Oops something went wrong: {str(e)}"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
