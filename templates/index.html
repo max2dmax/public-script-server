@@ -195,7 +195,7 @@
     <audio id="failSound">
         <source src="{{ url_for('static', filename='audio/fail.mp3') }}" type="audio/mpeg">
     </audio>
-    <div id="flash" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:999;display:none;"></div>
+    <div id="flash" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:999;display:none;justify-content:center;align-items:center;font-size:5rem;font-weight:bold;font-family:monospace;color:white;"></div>
 
     <script>
         // Fancy boot-up animation
@@ -232,11 +232,15 @@
             }
         });
 
-        function flashColor(color) {
+        function flashColor(color, text) {
             const flash = document.getElementById("flash");
             flash.style.backgroundColor = color;
-            flash.style.display = "block";
-            setTimeout(() => flash.style.display = "none", 500);
+            flash.textContent = text;
+            flash.style.display = "flex";
+            setTimeout(() => {
+                flash.style.display = "none";
+                flash.textContent = "";
+            }, 500);
         }
 
         // Normalization function for script comparison
@@ -276,11 +280,11 @@
             // Use normalization for comparison
             if (normalize(userText, filename) === normalize(answerText, filename)) {
                 document.getElementById("successSound").play();
-                flashColor("green");
+                flashColor("green", "PASS");
                 resultText.textContent = "✅ Passed!";
             } else {
                 document.getElementById("failSound").play();
-                flashColor("red");
+                flashColor("red", "FAIL");
                 resultText.textContent = "❌ Failed. Try again!";
             }
 
