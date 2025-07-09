@@ -173,7 +173,7 @@
                         <li>Save your changes</li>
                         <li>Upload your version below and click "Check My Work"</li>
                     </ol>
-                    <label for="upload-{{ loop.index }}" class="custom-file-upload">Choose File</label>
+                    <label for="upload-{{ loop.index }}" class="custom-file-upload">Upload Edited Script</label>
                     <input type="file" id="upload-{{ loop.index }}">
                     <button onclick="checkScript({{ loop.index }}, '{{ script.filename }}')">Check My Work</button>
                 </div>
@@ -187,10 +187,6 @@
                 </div>
 
                 <!-- Edit in your own text editor section -->
-                <button onclick="toggleExternalEditor({{ loop.index }})">🧑‍💻 Edit in your own text editor</button>
-                <div id="external-{{ loop.index }}" class="hidden" style="margin-top: 0.5rem;">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Visual_Studio_Code_1.35_icon.svg" alt="VS Code Logo" style="height: 32px; vertical-align: middle; margin-bottom: 0.5rem;">
-                    <ol>
 
                 <p id="result-{{ loop.index }}"></p>
             </div>
