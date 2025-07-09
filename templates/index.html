@@ -172,7 +172,7 @@
                 <!-- Edit-in-browser button and editor -->
                 <button onclick="toggleEditor({{ loop.index }})">✏️ Edit script in browser</button>
                 <div id="editor-{{ loop.index }}" class="hidden">
-                    <textarea id="editor-textarea-{{ loop.index }}" rows="10" cols="60" style="margin-top:0.5rem;background:#000;color:#33ff33;border:1px solid #33ff33;font-family:monospace;"></textarea>
+                    <textarea id="editor-textarea-{{ loop.index }}" data-filename="{{ script.filename }}" rows="10" cols="60" style="margin-top:0.5rem;background:#000;color:#33ff33;border:1px solid #33ff33;font-family:monospace;"></textarea>
                     <br>
                     <button onclick="submitEditor({{ loop.index }}, '{{ script.filename }}')">✅ Submit Edited Script</button>
                 </div>
@@ -302,9 +302,18 @@
         }
 
         // Edit-in-browser functions
-        function toggleEditor(index) {
+        async function toggleEditor(index) {
             const editorDiv = document.getElementById(`editor-${index}`);
+            const textarea = document.getElementById(`editor-textarea-${index}`);
+            const filename = textarea.getAttribute("data-filename");
+
             editorDiv.classList.toggle("hidden");
+
+            if (!editorDiv.classList.contains("hidden") && textarea.value.trim() === "") {
+                const response = await fetch(`/grab/${filename}`);
+                const answerText = await response.text();
+                textarea.value = answerText;
+            }
         }
 
         async function submitEditor(index, filename) {
