@@ -164,10 +164,19 @@
                     <pre><code id="answer-{{ loop.index }}">Loading...</code></pre>
                 </details>
 
-                <!-- Upload -->
-                <label for="upload-{{ loop.index }}" class="custom-file-upload">Choose File</label>
-                <input type="file" id="upload-{{ loop.index }}">
-                <button onclick="checkScript({{ loop.index }}, '{{ script.filename }}')">Check My Work</button>
+                <!-- External Editor Upload UI -->
+                <button onclick="toggleExternalEditor({{ loop.index }})">🧑‍💻 Edit in your own text editor</button>
+                <div id="external-{{ loop.index }}" class="hidden" style="margin-top: 0.5rem;">
+                    <ol>
+                        <li>Download the script using the link above</li>
+                        <li>Open it in your favorite text editor</li>
+                        <li>Save your changes</li>
+                        <li>Upload your version below and click "Check My Work"</li>
+                    </ol>
+                    <label for="upload-{{ loop.index }}" class="custom-file-upload">Choose File</label>
+                    <input type="file" id="upload-{{ loop.index }}">
+                    <button onclick="checkScript({{ loop.index }}, '{{ script.filename }}')">Check My Work</button>
+                </div>
 
                 <!-- Edit-in-browser button and editor -->
                 <button onclick="toggleEditor({{ loop.index }})">✏️ Edit script in browser</button>
@@ -176,6 +185,12 @@
                     <br>
                     <button onclick="submitEditor({{ loop.index }}, '{{ script.filename }}')">✅ Submit Edited Script</button>
                 </div>
+
+                <!-- Edit in your own text editor section -->
+                <button onclick="toggleExternalEditor({{ loop.index }})">🧑‍💻 Edit in your own text editor</button>
+                <div id="external-{{ loop.index }}" class="hidden" style="margin-top: 0.5rem;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Visual_Studio_Code_1.35_icon.svg" alt="VS Code Logo" style="height: 32px; vertical-align: middle; margin-bottom: 0.5rem;">
+                    <ol>
 
                 <p id="result-{{ loop.index }}"></p>
             </div>
@@ -309,10 +324,20 @@
 
             editorDiv.classList.toggle("hidden");
 
-            if (!editorDiv.classList.contains("hidden") && textarea.value.trim() === "") {
-                const response = await fetch(`/grab/${filename}`);
-                const answerText = await response.text();
-                textarea.value = answerText;
+            const uploadLabel = document.querySelector(`label[for="upload-${index}"]`);
+            const checkButton = document.querySelector(`#script-${index} button[onclick^="checkScript"]`);
+
+            if (!editorDiv.classList.contains("hidden")) {
+                if (textarea.value.trim() === "") {
+                    const response = await fetch(`/grab/${filename}`);
+                    const answerText = await response.text();
+                    textarea.value = answerText;
+                }
+                uploadLabel.style.display = "none";
+                checkButton.style.display = "none";
+            } else {
+                uploadLabel.style.display = "inline-block";
+                checkButton.style.display = "inline-block";
             }
         }
 
@@ -333,6 +358,11 @@
             }
 
             document.getElementById(`answer-${index}`).textContent = answerText;
+        }
+        // Toggle external editor upload UI
+        function toggleExternalEditor(index) {
+            const externalDiv = document.getElementById(`external-${index}`);
+            externalDiv.classList.toggle("hidden");
         }
     </script>
 </body>
