@@ -333,11 +333,12 @@
                 midnightMusic.setAttribute('data-resume', 'false');
             }
 
-            playSound().then(() => {
+            const tempAudio = playSound();
+            tempAudio.onended = () => {
                 if (midnightMusic.getAttribute('data-resume') === 'true') {
                     midnightMusic.play();
                 }
-            });
+            };
         }
 
         async function checkScript(index, filename) {
@@ -354,11 +355,19 @@
 
             // Use normalization for comparison
             if (normalize(userText, filename) === normalize(answerText, filename)) {
-                overrideAudio(() => document.getElementById("successSound").play());
+                overrideAudio(() => {
+                    const audio = document.getElementById("successSound");
+                    audio.play();
+                    return audio;
+                });
                 flashColor("green", "PASS");
                 resultText.textContent = "✅ Passed!";
             } else {
-                overrideAudio(() => document.getElementById("failSound").play());
+                overrideAudio(() => {
+                    const audio = document.getElementById("failSound");
+                    audio.play();
+                    return audio;
+                });
                 flashColor("red", "FAIL");
                 resultText.textContent = "❌ Failed. Try again!";
             }
@@ -399,11 +408,19 @@
             const answerText = await response.text();
 
             if (normalize(editorText, filename) === normalize(answerText, filename)) {
-                overrideAudio(() => document.getElementById("successSound").play());
+                overrideAudio(() => {
+                    const audio = document.getElementById("successSound");
+                    audio.play();
+                    return audio;
+                });
                 flashColor("green", "PASS");
                 resultText.textContent = "✅ Passed!";
             } else {
-                overrideAudio(() => document.getElementById("failSound").play());
+                overrideAudio(() => {
+                    const audio = document.getElementById("failSound");
+                    audio.play();
+                    return audio;
+                });
                 flashColor("red", "FAIL");
                 resultText.textContent = "❌ Failed. Try again!";
             }
