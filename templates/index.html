@@ -68,13 +68,24 @@
         }
 
         input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
             background-color: #111;
             border: 2px solid #33ff33;
             color: #33ff33;
-            padding: 0.4rem;
-            font-family: inherit;
+            padding: 0.4rem 1rem;
+            margin-right: 0.5rem;
             cursor: pointer;
-            margin-bottom: 0.5rem;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #33ff33;
+            color: #111;
         }
 
         button {
@@ -106,6 +117,16 @@
         <p id="line2" class="hidden">Loading script archives ██████████ 100%</p>
         <p id="line3" class="hidden">Establishing secure shell 🔐</p>
         <p id="line4" class="hidden">Access granted. Welcome, Max.</p>
+    </div>
+
+    <hr style="border-color: #33ff33; margin: 2rem 0;">
+
+    <div>
+        <p><strong>💸 Explore Other RichKidWebsites:</strong></p>
+        <ul>
+            <li><a href="https://richkidseed.onrender.com" target="_blank">🌱 richkidseed.onrender.com</a></li>
+            <!-- Add more links here as needed -->
+        </ul>
     </div>
 
     <div class="terminal-box hidden" id="mainContent">
@@ -147,6 +168,7 @@
                 </details>
 
                 <!-- Upload -->
+                <label for="upload-{{ loop.index }}" class="custom-file-upload">Choose File</label>
                 <input type="file" id="upload-{{ loop.index }}">
                 <button onclick="checkScript({{ loop.index }}, '{{ script.filename }}')">Check My Work</button>
                 <p id="result-{{ loop.index }}"></p>
