@@ -71,8 +71,8 @@
 <body>
     <button id="toggleButton">Toggle Red Alert Mode</button>
 
-    <audio id="alarm" class="hidden">
-        <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_6ecf8fbcf1.mp3" type="audio/mpeg">
+    <audio id="alarm" class="hidden" preload="auto">
+        <source src="{{ url_for('static', filename='audio/Red_Alert.mp3') }}" type="audio/mpeg">
     </audio>
 
     <div id="bootup" class="terminal-box">
