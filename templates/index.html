@@ -148,7 +148,7 @@
 </head>
 <body>
     <button id="toggleButton">Toggle Red Alert Mode</button>
-    <button id="midnightToggleButton" style="position: fixed; top: 10px; right: 180px;">Toggle Midnight Mode</button>
+    <button id="midnightToggleButton" style="position: fixed; top: 10px; left: 10px;">Toggle Midnight Mode</button>
 
     <audio id="alarm" class="hidden" preload="auto">
         <source src="{{ url_for('static', filename='audio/Red_Alert.mp3') }}" type="audio/mpeg">
@@ -324,6 +324,22 @@
                 .toLowerCase();
         }
 
+        // Utility to temporarily pause midnight music, play a sound, then resume if appropriate
+        function overrideAudio(playSound) {
+            if (!midnightMusic.paused) {
+                midnightMusic.pause();
+                midnightMusic.setAttribute('data-resume', 'true');
+            } else {
+                midnightMusic.setAttribute('data-resume', 'false');
+            }
+
+            playSound().then(() => {
+                if (midnightMusic.getAttribute('data-resume') === 'true') {
+                    midnightMusic.play();
+                }
+            });
+        }
+
         async function checkScript(index, filename) {
             const fileInput = document.getElementById(`upload-${index}`);
             const resultText = document.getElementById(`result-${index}`);
@@ -338,11 +354,11 @@
 
             // Use normalization for comparison
             if (normalize(userText, filename) === normalize(answerText, filename)) {
-                document.getElementById("successSound").play();
+                overrideAudio(() => document.getElementById("successSound").play());
                 flashColor("green", "PASS");
                 resultText.textContent = "✅ Passed!";
             } else {
-                document.getElementById("failSound").play();
+                overrideAudio(() => document.getElementById("failSound").play());
                 flashColor("red", "FAIL");
                 resultText.textContent = "❌ Failed. Try again!";
             }
@@ -383,11 +399,11 @@
             const answerText = await response.text();
 
             if (normalize(editorText, filename) === normalize(answerText, filename)) {
-                document.getElementById("successSound").play();
+                overrideAudio(() => document.getElementById("successSound").play());
                 flashColor("green", "PASS");
                 resultText.textContent = "✅ Passed!";
             } else {
-                document.getElementById("failSound").play();
+                overrideAudio(() => document.getElementById("failSound").play());
                 flashColor("red", "FAIL");
                 resultText.textContent = "❌ Failed. Try again!";
             }
