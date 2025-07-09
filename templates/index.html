@@ -184,6 +184,28 @@
             setTimeout(() => flash.style.display = "none", 500);
         }
 
+        // Normalization function for script comparison
+        function normalize(scriptText, filename = "") {
+            return scriptText
+                .split("\n")
+                .map(line => line.trim())
+                .filter(line => line && !line.startsWith("#"))
+                .map(line => {
+                    // General: normalize variable assignments
+                    line = line.replace(/^[A-Z_]+\s*=\s*.*$/, 'VAR_ASSIGNMENT');
+
+                    // Script-specific tweaks
+                    if (filename === "FixTheLoop.sh") {
+                        line = line.replace(/for\s+\w+\s+in\s+\{1\.\.5\}/, "LOOP_FROM_1_TO_5");
+                        line = line.replace(/for\s+\w+\s+in\s+\$\(\s*seq\s+1\s+5\s*\)/, "LOOP_FROM_1_TO_5");
+                    }
+
+                    return line;
+                })
+                .join("\n")
+                .toLowerCase();
+        }
+
         async function checkScript(index, filename) {
             const fileInput = document.getElementById(`upload-${index}`);
             const resultText = document.getElementById(`result-${index}`);
@@ -196,10 +218,8 @@
             const response = await fetch(`/static/answers/${filename}`);
             const answerText = await response.text();
 
-            const cleanedUser = userText.trim().replace(/\s+/g, "");
-            const cleanedAnswer = answerText.trim().replace(/\s+/g, "");
-
-            if (cleanedUser === cleanedAnswer) {
+            // Use normalization for comparison
+            if (normalize(userText, filename) === normalize(answerText, filename)) {
                 document.getElementById("successSound").play();
                 flashColor("green");
                 resultText.textContent = "✅ Passed!";
