@@ -51,6 +51,42 @@ scripts = [
         "title": "Rich Kid Martin's Script",
         "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
         "category": "prank"
+    },
+    {
+        "filename": "FillInTheBlanks.sh",
+        "title": "Fill in the Blanks - Variables",
+        "description": "Define the missing variables to complete the sentence.",
+        "category": "learning"
+    },
+    {
+        "filename": "FixTheLoop.sh",
+        "title": "Fix the Broken Loop",
+        "description": "Fix the for loop so it counts correctly from 1 to 5.",
+        "category": "learning"
+    },
+    {
+        "filename": "MathChecker.sh",
+        "title": "Math Checker Script",
+        "description": "Prompt for two numbers, add them, and display the result.",
+        "category": "learning"
+    },
+    {
+        "filename": "GuessTheSecret.sh",
+        "title": "Guess the Secret",
+        "description": "Prompt for a password and validate it against a hardcoded secret.",
+        "category": "learning"
+    },
+    {
+        "filename": "BuildYourOwnMenu.sh",
+        "title": "Build Your Own Menu",
+        "description": "Create a CLI menu that responds to user input.",
+        "category": "learning"
+    },
+    {
+        "filename": "DataExtractor.sh",
+        "title": "Data Extractor",
+        "description": "Extract and print lines containing 'ERROR' from a log file.",
+        "category": "learning"
     }
 ]
 
