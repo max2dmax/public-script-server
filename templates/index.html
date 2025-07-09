@@ -168,6 +168,15 @@
                 <label for="upload-{{ loop.index }}" class="custom-file-upload">Choose File</label>
                 <input type="file" id="upload-{{ loop.index }}">
                 <button onclick="checkScript({{ loop.index }}, '{{ script.filename }}')">Check My Work</button>
+
+                <!-- Edit-in-browser button and editor -->
+                <button onclick="toggleEditor({{ loop.index }})">✏️ Edit script in browser</button>
+                <div id="editor-{{ loop.index }}" class="hidden">
+                    <textarea id="editor-textarea-{{ loop.index }}" rows="10" cols="60" style="margin-top:0.5rem;background:#000;color:#33ff33;border:1px solid #33ff33;font-family:monospace;"></textarea>
+                    <br>
+                    <button onclick="submitEditor({{ loop.index }}, '{{ script.filename }}')">✅ Submit Edited Script</button>
+                </div>
+
                 <p id="result-{{ loop.index }}"></p>
             </div>
             {% endfor %}
@@ -289,6 +298,31 @@
             }
 
             // Load answer key text
+            document.getElementById(`answer-${index}`).textContent = answerText;
+        }
+
+        // Edit-in-browser functions
+        function toggleEditor(index) {
+            const editorDiv = document.getElementById(`editor-${index}`);
+            editorDiv.classList.toggle("hidden");
+        }
+
+        async function submitEditor(index, filename) {
+            const editorText = document.getElementById(`editor-textarea-${index}`).value;
+            const resultText = document.getElementById(`result-${index}`);
+            const response = await fetch(`/static/answers/${filename}`);
+            const answerText = await response.text();
+
+            if (normalize(editorText, filename) === normalize(answerText, filename)) {
+                document.getElementById("successSound").play();
+                flashColor("green", "PASS");
+                resultText.textContent = "✅ Passed!";
+            } else {
+                document.getElementById("failSound").play();
+                flashColor("red", "FAIL");
+                resultText.textContent = "❌ Failed. Try again!";
+            }
+
             document.getElementById(`answer-${index}`).textContent = answerText;
         }
     </script>
