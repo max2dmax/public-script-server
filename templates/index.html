@@ -620,5 +620,52 @@
     const exitChaosButton = document.getElementById("exitChaosButton");
     exitChaosButton.addEventListener("click", exitChaosMode);
     </script>
+</div>
+
+<!-- Floating Chatbot Button and Container -->
+<div id="chatbotContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+    <button id="toggleChatbot" style="background: #111; border: 2px solid #33ff33; color: #33ff33; font-weight: bold; border-radius: 50%; width: 60px; height: 60px; font-size: 1.2rem; box-shadow: 0 0 15px #33ff33;">💬</button>
+    <div id="chatbotWindow" style="display: none; position: absolute; bottom: 70px; right: 0; width: 300px; height: 400px; background: #111; border: 2px solid #33ff33; color: #33ff33; font-family: monospace; border-radius: 10px; padding: 10px; overflow-y: auto;">
+        <div id="chatLog" style="height: 330px; overflow-y: auto;"></div>
+        <input type="text" id="userInput" placeholder="Talk to MAXNET..." style="width: 100%; background: #000; color: #33ff33; border: 1px solid #33ff33; padding: 5px; margin-top: 5px;">
+    </div>
+</div>
+
+<script>
+// Chatbot floating button and memory logic
+const toggleChatbot = document.getElementById("toggleChatbot");
+const chatbotWindow = document.getElementById("chatbotWindow");
+const userInput = document.getElementById("userInput");
+const chatLog = document.getElementById("chatLog");
+
+let conversationHistory = [];
+
+toggleChatbot.addEventListener("click", () => {
+    chatbotWindow.style.display = chatbotWindow.style.display === "none" ? "block" : "none";
+});
+
+userInput.addEventListener("keypress", async function(e) {
+    if (e.key === "Enter") {
+        const input = userInput.value.trim();
+        if (!input) return;
+
+        chatLog.innerHTML += `<p><strong>You:</strong> ${input}</p>`;
+        conversationHistory.push({ role: "user", content: input });
+
+        const res = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ history: conversationHistory })
+        });
+        const data = await res.json();
+        const reply = data.reply || "Uhh... error? 👀";
+
+        chatLog.innerHTML += `<p><strong>MAXNET:</strong> ${reply}</p>`;
+        conversationHistory.push({ role: "assistant", content: reply });
+        userInput.value = "";
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+});
+</script>
 </body>
 </html>
