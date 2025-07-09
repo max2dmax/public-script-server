@@ -110,6 +110,13 @@
         }
 
         #toggleButton {
+        #exitChaosButton {
+            display: none;
+        }
+
+        body.chaos-mode #exitChaosButton {
+            display: block !important;
+        }
             position: fixed;
             top: 10px;
             right: 10px;
@@ -555,6 +562,7 @@
         flash.textContent = "CHAOS MODE ENABLED";
         flash.style.display = "flex";
         flash.style.animation = "chaosFlash 0.5s infinite alternate";
+        exitChaosButton.style.display = "block";
     }
 
     // Exit Chaos Mode function
@@ -572,6 +580,7 @@
         flash.style.animation = "";
         flash.style.display = "none";
         flash.textContent = "";
+        exitChaosButton.style.display = "none";
     }
 
     // Event listener for Exit Chaos Mode button
