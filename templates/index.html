@@ -169,6 +169,7 @@
 <body>
     <button id="toggleButton">Toggle Red Alert Mode</button>
     <button id="midnightToggleButton" style="position: fixed; top: 10px; left: 10px;">Toggle Midnight Mode</button>
+    <button id="exitChaosButton" style="position: fixed; top: 10px; left: 200px;">Exit Chaos Mode</button>
 
     <h1 id="maxnetTitle" style="text-align: center; font-size: 3rem; margin-top: 1rem;">MAXNET</h1>
 
@@ -555,6 +556,27 @@
         flash.style.display = "flex";
         flash.style.animation = "chaosFlash 0.5s infinite alternate";
     }
+
+    // Exit Chaos Mode function
+    function exitChaosMode() {
+        [midnightMusic, alarm, bgMusic].forEach(audio => {
+            if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        });
+
+        document.body.classList.remove("chaos-mode");
+
+        const flash = document.getElementById("flash");
+        flash.style.animation = "";
+        flash.style.display = "none";
+        flash.textContent = "";
+    }
+
+    // Event listener for Exit Chaos Mode button
+    const exitChaosButton = document.getElementById("exitChaosButton");
+    exitChaosButton.addEventListener("click", exitChaosMode);
     </script>
 </body>
 </html>
