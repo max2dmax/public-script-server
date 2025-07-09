@@ -109,7 +109,10 @@
             animation: chaosFlash 0.5s infinite alternate;
         }
 
-        #toggleButton {
+        #toggleButton, #midnightToggleButton, #exitChaosButton {
+            display: none;
+        }
+
         #exitChaosButton {
             display: none;
         }
@@ -117,15 +120,28 @@
         body.chaos-mode #exitChaosButton {
             display: block !important;
         }
+        #toggleButton,
+        #midnightToggleButton,
+        #exitChaosButton {
             position: fixed;
-            top: 10px;
-            right: 10px;
             background-color: #111;
             border: 2px solid #33ff33;
             color: #33ff33;
             padding: 5px 10px;
             font-weight: bold;
             cursor: pointer;
+        }
+        #toggleButton {
+            top: 10px;
+            right: 10px;
+        }
+        #midnightToggleButton {
+            top: 10px;
+            left: 10px;
+        }
+        #exitChaosButton {
+            top: 10px;
+            left: 200px;
         }
 
         input[type="file"] {
@@ -301,6 +317,9 @@
                 document.getElementById('bootup').classList.add('hidden');
                 document.getElementById('mainContent').classList.remove('hidden');
                 document.getElementById('bgMusic').classList.remove('hidden');
+                // Show toggle buttons after bootup is complete
+                document.getElementById('toggleButton').style.display = 'block';
+                document.getElementById('midnightToggleButton').style.display = 'block';
             }
         }
     
@@ -562,7 +581,7 @@
         flash.textContent = "CHAOS MODE ENABLED";
         flash.style.display = "flex";
         flash.style.animation = "chaosFlash 0.5s infinite alternate";
-        exitChaosButton.style.display = "block";
+        document.getElementById('exitChaosButton').style.display = 'block';
     }
 
     // Exit Chaos Mode function
@@ -580,7 +599,7 @@
         flash.style.animation = "";
         flash.style.display = "none";
         flash.textContent = "";
-        exitChaosButton.style.display = "none";
+        document.getElementById('exitChaosButton').style.display = 'none';
     }
 
     // Event listener for Exit Chaos Mode button
