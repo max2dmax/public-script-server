@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <title>MAXNET - Script Mainframe 🖥️</title>
     <style>
+        #maxnetTitle {
+            color: #33ff33;
+            transition: color 0.5s ease;
+        }
+        body.red-alert-mode #maxnetTitle {
+            color: #ff4444;
+        }
+        body.midnight-mode #maxnetTitle {
+            color: #bb99ff;
+        }
         body {
             margin: 0;
             padding: 2rem;
@@ -89,6 +99,16 @@
             animation: redAlertFlash 1s infinite;
         }
 
+        @keyframes chaosFlash {
+            0% { background-color: black; color: #ff00ff; }
+            50% { background-color: #ff00ff; color: black; }
+            100% { background-color: black; color: #ff00ff; }
+        }
+
+        .chaos-mode {
+            animation: chaosFlash 0.5s infinite alternate;
+        }
+
         #toggleButton {
             position: fixed;
             top: 10px;
@@ -149,6 +169,8 @@
 <body>
     <button id="toggleButton">Toggle Red Alert Mode</button>
     <button id="midnightToggleButton" style="position: fixed; top: 10px; left: 10px;">Toggle Midnight Mode</button>
+
+    <h1 id="maxnetTitle" style="text-align: center; font-size: 3rem; margin-top: 1rem;">MAXNET</h1>
 
     <audio id="alarm" class="hidden" preload="auto">
         <source src="{{ url_for('static', filename='audio/Red_Alert.mp3') }}" type="audio/mpeg">
@@ -281,13 +303,22 @@
         const alarm = document.getElementById('alarm');
         toggleButton.addEventListener('click', () => {
             const isActive = document.body.classList.toggle('red-alert-mode');
+            const flash = document.getElementById("flash");
             if (isActive) {
-                alarm.classList.remove('hidden');
+                alarm.classList.remove("hidden");
+                alarm.loop = true;
                 alarm.play();
+
+                if (document.body.classList.contains("midnight-mode")) {
+                    activateChaosMode();
+                }
             } else {
                 alarm.pause();
                 alarm.currentTime = 0;
-                alarm.classList.add('hidden');
+                alarm.classList.add("hidden");
+                document.body.classList.remove("chaos-mode");
+                flash.style.animation = "";
+                flash.textContent = "";
             }
         });
 
@@ -324,20 +355,33 @@
                 .toLowerCase();
         }
 
-        // Utility to temporarily pause midnight music, play a sound, then resume if appropriate
+        // Utility to temporarily pause background audios, play a sound, then resume if appropriate
         function overrideAudio(playSound) {
+            const audiosToPause = [];
+
             if (!midnightMusic.paused) {
                 midnightMusic.pause();
                 midnightMusic.setAttribute('data-resume', 'true');
+                audiosToPause.push(midnightMusic);
             } else {
                 midnightMusic.setAttribute('data-resume', 'false');
             }
 
+            if (!alarm.paused) {
+                alarm.pause();
+                alarm.setAttribute('data-resume', 'true');
+                audiosToPause.push(alarm);
+            } else {
+                alarm.setAttribute('data-resume', 'false');
+            }
+
             const tempAudio = playSound();
             tempAudio.onended = () => {
-                if (midnightMusic.getAttribute('data-resume') === 'true') {
-                    midnightMusic.play();
-                }
+                audiosToPause.forEach(audio => {
+                    if (audio.getAttribute('data-resume') === 'true') {
+                        audio.play();
+                    }
+                });
             };
         }
 
@@ -446,16 +490,23 @@
         midnightToggleButton.addEventListener("click", () => {
             const isMidnight = document.body.classList.toggle("midnight-mode");
             rainContainer.classList.toggle("hidden");
-
+            const flash = document.getElementById("flash");
             if (isMidnight) {
                 midnightMusic.classList.remove("hidden");
                 midnightMusic.play();
                 generateRain();
+
+                if (document.body.classList.contains("red-alert-mode")) {
+                    activateChaosMode();
+                }
             } else {
                 midnightMusic.pause();
                 midnightMusic.currentTime = 0;
                 midnightMusic.classList.add("hidden");
                 rainContainer.innerHTML = "";
+                document.body.classList.remove("chaos-mode");
+                flash.style.animation = "";
+                flash.textContent = "";
             }
         });
 
@@ -473,3 +524,37 @@
     </script>
 </body>
 </html>
+        // CHAOS MODE
+        function activateChaosMode() {
+            // Stop any currently playing audio
+            [midnightMusic, alarm, bgMusic].forEach(audio => {
+                if (!audio.paused) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+            });
+
+            // Play all MP3s
+            midnightMusic.classList.remove("hidden");
+            midnightMusic.loop = true;
+            midnightMusic.play();
+
+            alarm.classList.remove("hidden");
+            alarm.loop = true;
+            alarm.play();
+
+            bgMusic.classList.remove("hidden");
+            bgMusic.loop = true;
+            bgMusic.play();
+
+            // Flashing background
+            document.body.classList.add("chaos-mode");
+
+            // Display CHAOS MODE message
+            const flash = document.getElementById("flash");
+            flash.style.backgroundColor = "black";
+            flash.style.color = "#ff00ff";
+            flash.textContent = "CHAOS MODE ENABLED";
+            flash.style.display = "flex";
+            flash.style.animation = "chaosFlash 0.5s infinite alternate";
+        }
