@@ -521,40 +521,40 @@
                 rainContainer.appendChild(drop);
             }
         }
+    // CHAOS MODE
+    function activateChaosMode() {
+        // Stop any currently playing audio
+        [midnightMusic, alarm, bgMusic].forEach(audio => {
+            if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        });
+
+        // Play all MP3s
+        midnightMusic.classList.remove("hidden");
+        midnightMusic.loop = true;
+        midnightMusic.play();
+
+        alarm.classList.remove("hidden");
+        alarm.loop = true;
+        alarm.play();
+
+        bgMusic.classList.remove("hidden");
+        bgMusic.loop = true;
+        bgMusic.play();
+
+        // Flashing background
+        document.body.classList.add("chaos-mode");
+
+        // Display CHAOS MODE message
+        const flash = document.getElementById("flash");
+        flash.style.backgroundColor = "black";
+        flash.style.color = "#ff00ff";
+        flash.textContent = "CHAOS MODE ENABLED";
+        flash.style.display = "flex";
+        flash.style.animation = "chaosFlash 0.5s infinite alternate";
+    }
     </script>
 </body>
 </html>
-        // CHAOS MODE
-        function activateChaosMode() {
-            // Stop any currently playing audio
-            [midnightMusic, alarm, bgMusic].forEach(audio => {
-                if (!audio.paused) {
-                    audio.pause();
-                    audio.currentTime = 0;
-                }
-            });
-
-            // Play all MP3s
-            midnightMusic.classList.remove("hidden");
-            midnightMusic.loop = true;
-            midnightMusic.play();
-
-            alarm.classList.remove("hidden");
-            alarm.loop = true;
-            alarm.play();
-
-            bgMusic.classList.remove("hidden");
-            bgMusic.loop = true;
-            bgMusic.play();
-
-            // Flashing background
-            document.body.classList.add("chaos-mode");
-
-            // Display CHAOS MODE message
-            const flash = document.getElementById("flash");
-            flash.style.backgroundColor = "black";
-            flash.style.color = "#ff00ff";
-            flash.textContent = "CHAOS MODE ENABLED";
-            flash.style.display = "flex";
-            flash.style.animation = "chaosFlash 0.5s infinite alternate";
-        }
