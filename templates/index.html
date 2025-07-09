@@ -109,10 +109,21 @@
         <details>
             <summary><strong>🧠 Learning Scripts</strong></summary>
             {% for script in scripts if script.category == 'learning' %}
-            <div class="script">
+            <div class="script" id="script-{{ loop.index }}">
                 <p><strong>{{ script.title }}</strong></p>
                 <p>{{ script.description }}</p>
                 <p><a href="/grab/{{ script.filename }}">Download ➤ {{ script.filename }}</a></p>
+
+                <!-- Answer Dropdown -->
+                <details>
+                    <summary><strong>ANSWER ></strong></summary>
+                    <pre><code id="answer-{{ loop.index }}">Loading...</code></pre>
+                </details>
+
+                <!-- Upload -->
+                <input type="file" id="upload-{{ loop.index }}">
+                <button onclick="checkScript({{ loop.index }}, '{{ script.filename }}')">Check My Work</button>
+                <p id="result-{{ loop.index }}"></p>
             </div>
             {% endfor %}
         </details>
@@ -122,6 +133,14 @@
     <audio autoplay loop id="bgMusic" class="hidden">
         <source src="https://cdn.pixabay.com/audio/2022/03/24/audio_22606a3e07.mp3" type="audio/mpeg">
     </audio>
+
+    <audio id="successSound">
+        <source src="{{ url_for('static', filename='audio/success.mp3') }}" type="audio/mpeg">
+    </audio>
+    <audio id="failSound">
+        <source src="{{ url_for('static', filename='audio/fail.mp3') }}" type="audio/mpeg">
+    </audio>
+    <div id="flash" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:999;display:none;"></div>
 
     <script>
         // Fancy boot-up animation
@@ -157,6 +176,42 @@
                 alarm.classList.add('hidden');
             }
         });
+
+        function flashColor(color) {
+            const flash = document.getElementById("flash");
+            flash.style.backgroundColor = color;
+            flash.style.display = "block";
+            setTimeout(() => flash.style.display = "none", 500);
+        }
+
+        async function checkScript(index, filename) {
+            const fileInput = document.getElementById(`upload-${index}`);
+            const resultText = document.getElementById(`result-${index}`);
+            if (!fileInput.files[0]) {
+                resultText.textContent = "Please upload your script first.";
+                return;
+            }
+
+            const userText = await fileInput.files[0].text();
+            const response = await fetch(`/static/answers/${filename}`);
+            const answerText = await response.text();
+
+            const cleanedUser = userText.trim().replace(/\s+/g, "");
+            const cleanedAnswer = answerText.trim().replace(/\s+/g, "");
+
+            if (cleanedUser === cleanedAnswer) {
+                document.getElementById("successSound").play();
+                flashColor("green");
+                resultText.textContent = "✅ Passed!";
+            } else {
+                document.getElementById("failSound").play();
+                flashColor("red");
+                resultText.textContent = "❌ Failed. Try again!";
+            }
+
+            // Load answer key text
+            document.getElementById(`answer-${index}`).textContent = answerText;
+        }
     </script>
 </body>
 </html>
