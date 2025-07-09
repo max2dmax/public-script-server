@@ -359,6 +359,12 @@
         function toggleExternalEditor(index) {
             const externalDiv = document.getElementById(`external-${index}`);
             externalDiv.classList.toggle("hidden");
+            const editorButton = document.querySelector(`#script-${index} button[onclick^="toggleEditor"]`);
+            if (!externalDiv.classList.contains("hidden")) {
+                editorButton.style.display = "none";
+            } else {
+                editorButton.style.display = "inline-block";
+            }
         }
     </script>
 </body>
