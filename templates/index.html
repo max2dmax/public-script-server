@@ -120,6 +120,10 @@
         body.chaos-mode #exitChaosButton {
             display: block !important;
         }
+        body.chaos-mode #toggleButton,
+        body.chaos-mode #midnightToggleButton {
+            display: none !important;
+        }
         #toggleButton,
         #midnightToggleButton,
         #exitChaosButton {
@@ -299,7 +303,7 @@
     <audio id="failSound">
         <source src="{{ url_for('static', filename='audio/fail.mp3') }}" type="audio/mpeg">
     </audio>
-    <div id="flash" style="position:fixed;top:140px;left:0;width:100%;height:calc(100% - 140px);z-index:999;display:none;justify-content:center;align-items:center;font-size:5rem;font-weight:bold;font-family:monospace;color:white;"></div>
+    <div id="flash" style="position:fixed;top:160px;left:0;width:100%;height:calc(100% - 160px);z-index:999;display:none;justify-content:center;align-items:center;font-size:5rem;font-weight:bold;font-family:monospace;color:white;"></div>
     <div id="rainContainer" class="rain hidden"></div>
 
     <script>
@@ -582,6 +586,8 @@
         flash.style.display = "flex";
         flash.style.animation = "chaosFlash 0.5s infinite alternate";
         document.getElementById('exitChaosButton').style.display = 'block';
+        document.getElementById('toggleButton').style.display = 'none';
+        document.getElementById('midnightToggleButton').style.display = 'none';
     }
 
     // Exit Chaos Mode function
@@ -602,6 +608,8 @@
         flash.style.display = "none";
         flash.textContent = "";
         document.getElementById('exitChaosButton').style.display = 'none';
+        document.getElementById('toggleButton').style.display = 'block';
+        document.getElementById('midnightToggleButton').style.display = 'block';
     }
 
     // Event listener for Exit Chaos Mode button
