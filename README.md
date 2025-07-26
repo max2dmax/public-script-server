@@ -111,7 +111,7 @@ Future Ideas
 
 ⸻
 
-🤝 Credits
+Credits
 
 Created with love, chaos, and way too much caffeine by Max.
 
