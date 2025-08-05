@@ -1,6 +1,6 @@
 MAXNET Public Script Server 
 
-Welcome to the MAXNET Script Server — a chaotic-good web app where users can:
+Welcome to the MAXNET Script Server, a good web app where users can:
 	•	Download functional, prank, and learning shell scripts 
 	•	Complete interactive coding challenges with instant feedback 
 	•	Trigger wild site modes like Red Alert and Midnight Mode 
