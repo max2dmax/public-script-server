@@ -96,6 +96,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         .cat-icon.prank { color: #ff63d8; }
         .cat-icon.learning { color: var(--warn); }
         .cat-icon.games { color: var(--link); }
+        .cat-icon.apps { color: var(--accent); }
 
         /* Stack spacing and width control */
         .terminal-box details {
@@ -217,7 +218,10 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         }
 
         .custom-file-upload {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: .4rem;
           background-color: var(--panel);
           border: 1.5px solid var(--accent);
           color: var(--text);
@@ -228,7 +232,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
           font-weight: 700;
           font-size: 0.95rem;
           height: 2.4rem;
-          line-height: 1.2rem;
+          line-height: 1;
           border-radius: 10px;
           box-sizing: border-box;
           transition: background-color .2s ease, color .2s ease, box-shadow .15s ease;
@@ -236,6 +240,10 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         .custom-file-upload:hover { background-color: var(--accent); color: #0b0e0f; box-shadow: var(--glow); }
 
         button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: .4rem;
           background-color: var(--panel);
           border: 1.5px solid var(--accent);
           color: var(--text);
@@ -246,7 +254,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
           font-weight: 700;
           font-size: 0.95rem;
           height: 2.4rem;
-          line-height: 1.2rem;
+          line-height: 1;
           border-radius: 10px;
           box-shadow: 0 0 0 rgba(0,0,0,0);
           transition: transform .08s ease, box-shadow .15s ease, border-color .2s ease, background-color .2s ease, color .2s ease;
@@ -423,7 +431,14 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         </details>
 
         <details>
-            <summary><strong>💸 Explore Other RichKid Apps</strong></summary>
+            <summary><span class="cat-icon apps" aria-hidden="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="3" width="7" height="7" rx="1" ry="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" ry="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" ry="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" ry="1" />
+    </svg>
+  </span><strong>Explore Other RichKid Apps</strong></summary>
             <div class="script">
                 <ul>
                     <li><a href="https://richkidseed.onrender.com" target="_blank"> richkidseed.onrender.com</a></li>
