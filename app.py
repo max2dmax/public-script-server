@@ -159,6 +159,10 @@ def walkie():
             data={
                 "model": "whisper-1",
                 "response_format": "json",
+                "language": "en",
+                "temperature": 0,
+                # Starter bias so it expects casual English
+                "prompt": "Casual conversational English with Gen Z slang",
             },
             timeout=60,
         )
@@ -169,6 +173,8 @@ def walkie():
                 "body": stt_resp.text,
             }), 502
         text = stt_resp.json().get("text", "").strip()
+        if len(text) < 2:
+            return jsonify({"error": "too_short", "message": "No speech detected"}), 200
         if not text:
             return jsonify({"error": "no_text_from_stt"}), 502
 
