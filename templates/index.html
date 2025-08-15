@@ -71,10 +71,6 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
             cursor: pointer;
             list-style: none;
             user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: .75rem;
             background-color: var(--panel);
             border: 1.5px solid var(--accent);
             color: var(--text);
@@ -85,7 +81,14 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
             font-size: 0.95rem;
             line-height: 1.2rem;
             transition: transform .08s ease, box-shadow .15s ease, border-color .2s ease, background-color .2s ease, color .2s ease;
+            display: grid;
+            grid-template-columns: 1.25rem 1fr 1.75rem; /* icon | centered text | chevron */
+            column-gap: .6rem;
+            text-align: center;
         }
+
+        details > summary .cat-icon { grid-column: 1; justify-self: start; }
+        details > summary strong { grid-column: 2; justify-self: center; }
 
         /* Custom category symbol styles */
         .cat-icon { display:inline-flex; width: 1.1rem; height: 1.1rem; margin-right: .5rem; }
@@ -108,20 +111,20 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
 
         details > summary::after {
             content: "▼";
+            grid-column: 3;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 26px;
-            height: 26px;
-            padding: 0 6px;
+            min-width: 22px;
+            height: 22px;
+            padding: 0;
             border: 1.5px solid var(--accent);
-            border-radius: 8px;
+            border-radius: 6px;
             background: transparent;
-            font-size: .85em;
+            font-size: .8em;
             line-height: 1;
             opacity: .95;
         }
-
         details[open] > summary::after { content: "▲"; }
 
         details > summary:hover { background-color: var(--accent); color: #0b0e0f; box-shadow: var(--glow); }
@@ -187,20 +190,19 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
             display: none;
         }
 
-        /* Fixed top button bar for better mobile layout */
+        /* Button bar under the title (in-flow) */
         #topButtons {
             display: none; /* revealed after boot */
-            position: fixed;
-            top: 10px;
-            left: 0;
-            right: 0;
+            position: static;
+            margin: 0.5rem auto 0;
+            max-width: 920px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            padding: 0 10px;
-            z-index: 10000;
-            pointer-events: none; /* container lets clicks pass except on buttons */
+            gap: 8px;
+            padding: 0;
+            z-index: 1;
+            pointer-events: auto;
         }
         #topButtons > button {
             position: static; /* override any legacy fixed rules */
@@ -273,17 +275,12 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
             .script { margin-bottom: 1rem; }
             a { font-size: 1rem; }
             .terminal-box details { max-width: 100%; margin: 0.6rem 0; }
-            details > summary { font-size: 1.1rem; padding: 0.75rem 0.9rem; width: 100%; }
+            details > summary { font-size: 1.05rem; padding: 0.65rem 0.9rem; width: 100%; }
+            details > summary::after { min-width: 20px; height: 20px; font-size: .75em; }
             button, .custom-file-upload { width: 100%; margin: 0.5rem 0 0; height: 48px; line-height: 48px; font-size: 1rem; }
             /* Top toggle buttons — mobile layout */
-            #topButtons { top: 8px; gap: 8px; padding: 0 8px; justify-content: space-between; }
-            #topButtons > button {
-                flex: 1 1 auto;
-                min-width: 0;
-                padding: 0.6rem 0.7rem;
-                font-size: 0.95rem;
-                border-width: 2px;
-            }
+            #topButtons { margin-top: .5rem; padding: 0 8px; justify-content: space-between; flex-wrap: wrap; }
+            #topButtons > button { flex: 1 1 calc(50% - 8px); }
             #exitChaosButton { display: none; } /* revealed by chaos-mode rule when needed */
             /* Chatbot: larger button and flexible panel */
             #chatbotContainer > #toggleChatbot { width: 64px; height: 64px; font-size: 1.4rem; }
@@ -294,13 +291,12 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     </style>
 </head>
 <body>
+    <h1 id="maxnetTitle" style="text-align: center; font-size: 3rem; margin-top: 1rem;">MAXNET</h1>
     <div id="topButtons">
       <button id="toggleButton">Toggle Red Alert Mode</button>
       <button id="midnightToggleButton">Toggle Midnight Mode</button>
       <button id="exitChaosButton">Exit Chaos Mode</button>
     </div>
-
-    <h1 id="maxnetTitle" style="text-align: center; font-size: 3rem; margin-top: 1rem;">MAXNET</h1>
 
     <audio id="alarm" class="hidden" preload="auto">
         <source src="{{ url_for('static', filename='audio/Red_Alert.mp3') }}" type="audio/mpeg">
