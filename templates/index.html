@@ -872,7 +872,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     } catch (e) {
       console.error('Mic permission denied', e);
       pttStatus.textContent = 'Mic permission needed';
-      try { flashColor('red','MIC BLOCKED'); } catch(_) {}
+      // Removed flashColor('red','MIC BLOCKED');
       return;
     }
 
@@ -880,7 +880,6 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     pressAt = performance.now();
     pttBtn.classList.add('listening');
     pttStatus.textContent = 'Recording… release to send';
-    try { flashColor('#1a2', 'LISTENING'); } catch(_) {}
 
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     const mimeCandidates = isSafari
@@ -943,7 +942,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
             console.error('Walkie error', resp.status, txt);
             pttStatus.textContent = 'Walkie error ' + resp.status;
             clearTranscript();
-            try { flashColor('red','WALKIE '+resp.status); } catch(_) {}
+            // Removed flashColor('red','WALKIE ...');
             return;
           }
 
