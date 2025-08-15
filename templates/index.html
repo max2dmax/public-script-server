@@ -492,10 +492,8 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         </details>
     </div>
 
-    <!-- 🎧 Lo-fi BGM -->
-    <audio autoplay loop id="bgMusic" class="hidden">
-        <source src="https://cdn.pixabay.com/audio/2022/03/24/audio_22606a3e07.mp3" type="audio/mpeg">
-    </audio>
+    <!-- BGM disabled for now to avoid 403s from external host; add a local file later -->
+    <audio id="bgMusic" class="hidden"></audio>
 
     <audio id="successSound">
         <source src="{{ url_for('static', filename='audio/success.mp3') }}" type="audio/mpeg">
@@ -909,7 +907,22 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
 
     // Get ephemeral client secret from your server
     const tokenRes = await fetch('/session');
-    const { client_secret } = await tokenRes.json();
+    if (!tokenRes.ok) {
+      const txt = await tokenRes.text();
+      console.error('[MAXNET] /session failed', tokenRes.status, txt);
+      pttStatus.textContent = 'Session error (' + tokenRes.status + '). Check server key/access.';
+      try { flashColor('red', 'SESSION ERROR ' + tokenRes.status); } catch(_) {}
+      initialized = false; // allow retry on next press
+      return;
+    }
+    const sess = await tokenRes.json();
+    const clientSecret = (sess && sess.client_secret && (sess.client_secret.value || sess.client_secret)) || sess.value;
+    if (!clientSecret) {
+      console.error('[MAXNET] /session missing client_secret', sess);
+      pttStatus.textContent = 'No client secret from server. Check app.py or env key.';
+      initialized = false;
+      return;
+    }
 
     // Create a data channel for optional events (not required)
     dc = pc.createDataChannel('oai-events');
@@ -929,7 +942,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     const base = 'https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview';
     const sdpAnswer = await fetch(base, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${client_secret.value}`, 'Content-Type': 'application/sdp' },
+      headers: { 'Authorization': `Bearer ${clientSecret}`, 'Content-Type': 'application/sdp' },
       body: local.sdp
     }).then(r=>r.text());
     await pc.setRemoteDescription({ type:'answer', sdp: sdpAnswer });
