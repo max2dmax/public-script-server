@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>MAXNET - Script Mainframe 🖥️</title>
     <style>
         #maxnetTitle {
@@ -47,6 +48,24 @@
 
         a:hover {
             text-decoration: underline;
+        }
+
+        /* Better tap targets and details styling */
+        details > summary {
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] > summary::after { content: "▲"; }
+        details:not([open]) > summary::after { content: "▼"; }
+
+        .script a, .script button, .custom-file-upload {
+            touch-action: manipulation;
         }
 
         .hacker-mode {
@@ -191,6 +210,28 @@
             background-color: #33ff33;
             color: #111;
         }
+        /* --- Mobile-friendly tweaks --- */
+        @media (max-width: 600px) {
+            body { padding: 1rem; font-size: 18px; }
+            #maxnetTitle { font-size: 2.2rem !important; }
+            .terminal-box { max-width: 100%; margin: 1rem auto; padding: 0.75rem; box-shadow: 0 0 10px #33ff33; }
+            .script { margin-bottom: 1rem; }
+            a { font-size: 1rem; }
+            details > summary { font-size: 1.1rem; padding: 0.75rem 0; }
+            button, .custom-file-upload { width: 100%; margin: 0.5rem 0 0; height: 48px; line-height: 48px; font-size: 1rem; }
+            /* Top toggle buttons — make them thumb-friendly */
+            #toggleButton, #midnightToggleButton, #exitChaosButton {
+                padding: 0.6rem 0.9rem; font-size: 0.95rem; border-width: 2px;
+            }
+            #toggleButton { top: 8px; right: 8px; }
+            #midnightToggleButton { top: 8px; left: 8px; }
+            #exitChaosButton { top: 8px; left: 140px; }
+            /* Chatbot: larger button and flexible panel */
+            #chatbotContainer > #toggleChatbot { width: 64px; height: 64px; font-size: 1.4rem; }
+            #chatbotContainer > #chatbotWindow { width: 90vw; height: 60vh; bottom: 76px; right: 0; }
+            /* Rain and effects lighter on mobile */
+            .raindrop { height: 60px; }
+          }
     </style>
 </head>
 <body>
@@ -214,7 +255,7 @@
         <p id="line4" class="hidden">Access granted. Welcome, Max.</p>
     </div>
 
-    <div class="terminal-box hidden" id="mainContent">
+    <div class="terminal-box hidden" id="mainContent" style="max-width: 920px; margin: 0 auto;">
         <p><strong>📁 Available Scripts:</strong></p>
         <details>
             <summary><strong>🛠️ Functional Scripts</strong></summary>
@@ -649,9 +690,9 @@
 </div>
 
 <!-- Floating Chatbot Button and Container -->
-<div id="chatbotContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+    <div id="chatbotContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
     <button id="toggleChatbot" style="background: #111; border: 2px solid #33ff33; color: #33ff33; font-weight: bold; border-radius: 50%; width: 60px; height: 60px; font-size: 1.2rem; box-shadow: 0 0 15px #33ff33;">💬</button>
-    <div id="chatbotWindow" style="display: none; position: absolute; bottom: 70px; right: 0; width: 300px; height: 400px; background: #111; border: 2px solid #33ff33; color: #33ff33; font-family: monospace; border-radius: 10px; padding: 10px; overflow-y: auto;">
+    <div id="chatbotWindow" style="display: none; position: absolute; bottom: 70px; right: 0; width: 300px; height: 420px; background: #111; border: 2px solid #33ff33; color: #33ff33; font-family: monospace; border-radius: 10px; padding: 10px; overflow-y: auto;">
         <div id="chatLog" style="height: 330px; overflow-y: auto;"></div>
         <input type="text" id="userInput" placeholder="Talk to MAXNET..." style="width: 100%; background: #000; color: #33ff33; border: 1px solid #33ff33; padding: 5px; margin-top: 5px;">
     </div>
