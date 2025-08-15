@@ -1,6 +1,7 @@
 from flask import Flask, render_template, send_from_directory, request, jsonify
 import os
 import openai
+import random
 
 app = Flask(__name__)
 
@@ -93,6 +94,20 @@ scripts = [
     }
 ]
 
+# Short, chaotic pop-up one-liners for the "interactive sass" feature
+SASSY_LINES = [
+    "girl I know you see me 👀",
+    "bestie… commit to the bit 😌",
+    "BROOOOOO just click it already",
+    "LMAOOOOOO not you hovering for 28 seconds",
+    "ok hacker Barbie, pick a script 💅",
+    "live laugh `chmod +x`",
+    "install responsibly… or don’t 🤷‍♀️",
+    "this one? bold choice tbh",
+    "be the chaos you want to run",
+    "psst… Konami code does something 👀"
+]
+
 
 @app.route('/')
 def home():
@@ -116,6 +131,14 @@ def chat():
         return jsonify({"reply": reply})
     except Exception as e:
         return jsonify({"reply": f"Oops something went wrong: {str(e)}"})
+
+
+# Route for random sassy one-liners
+@app.route('/sass')
+def random_sass():
+    """Return a random sassy one-liner for front-end popups."""
+    line = random.choice(SASSY_LINES)
+    return jsonify({"line": line})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
