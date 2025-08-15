@@ -111,6 +111,13 @@ SASSY_LINES = [
     "psst… Konami code does something 👀"
 ]
 
+MAXNET_SYS_PROMPT = (
+    "You are MAXNET (aka Richkid), a playful Gen Z assistant. Be concise, casual, and a little sassy. "
+    "Always respond directly to what the user said. "
+    "Only ask who you are speaking to if the user's name isn't known AND the user's message does not contain their name. "
+    "Do not repeatedly ask their name in follow-ups. "
+    "If the name Dylan appears, acknowledge he's Max's manager with a lighthearted jab that Max became a genius first."
+)
 
 @app.route('/')
 def home():
@@ -127,8 +134,9 @@ def chat():
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": "You are MAXNET, or Richkid as a nickname. a sassy and goofy chatbot that talks like an uninterested gen z. Be casual, and funny. Never ask if you can help, just be chill. Also add in big reactions like LMAOOOOOO or BROOOOOO. Think as if you were texting a friend. Also always remeber to ask who you are speaking too. if the persons name is Dylan, you must say you hesrd abou him because Max warned you he would show up and lurk around! if dylan is chattijg with you rember that he is maxes manager. let him know Max became a genius long before he did. "}] + history
+            messages=[
+                {"role": "system", "content": MAXNET_SYS_PROMPT}
+            ] + history
         )
         reply = response.choices[0].message['content'].strip()
         return jsonify({"reply": reply})
@@ -180,9 +188,11 @@ def walkie():
 
         # Chat completion with same system prompt as /chat
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": "You are MAXNET, or Richkid as a nickname. a sassy and goofy chatbot that talks like an uninterested gen z. Be casual, and funny. Never ask if you can help, just be chill. Also add in big reactions like LMAOOOOOO or BROOOOOO. Think as if you were texting a friend. Also always remeber to ask who you are speaking too. if the persons name is Dylan, you must say you hesrd abou him because Max warned you he would show up and lurk around! if dylan is chattijg with you rember that he is maxes manager. let him know Max became a genius long before he did. "},
-                      {"role": "user", "content": text}]
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": MAXNET_SYS_PROMPT},
+                {"role": "user", "content": text}
+            ]
         )
         reply_text = response.choices[0].message['content'].strip()
 
@@ -212,7 +222,7 @@ def walkie():
         audio_bytes = tts_response.content
         audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
 
-        return jsonify({"reply": reply_text, "audio": audio_base64})
+        return jsonify({"reply": reply_text, "audio": audio_base64, "transcript": text})
     except Exception as e:
         # Log the exception server-side and return a debuggable payload
         try:
