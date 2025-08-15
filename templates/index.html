@@ -837,6 +837,23 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
   if (!pttBtn) return;
 
   let pc; let micStream; let remoteAudio; let initialized = false; let sending = false; let dc;
+  let pendingSpeak = false;
+  function requestSpeak(){
+    if (!dc) { console.warn('[MAXNET] no data channel yet'); return; }
+    if (dc.readyState === 'open') {
+      dc.send(JSON.stringify({
+        type: 'response.create',
+        response: {
+          modalities: ['audio'],
+          instructions: 'You are MAXNET – a playful Gen Z walkie bot. Keep replies short and conversational; respond to what I just said.'
+        }
+      }));
+      console.log('[MAXNET] response.create sent');
+    } else {
+      console.warn('[MAXNET] data channel not open; deferring speak');
+      pendingSpeak = true;
+    }
+  }
 
   async function initConnection(){
     if (initialized) return;
@@ -851,6 +868,8 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
     pc = new RTCPeerConnection();
+    pc.onconnectionstatechange = ()=> console.log('[MAXNET] pc.connectionState =', pc.connectionState);
+    pc.oniceconnectionstatechange = ()=> console.log('[MAXNET] pc.iceConnectionState =', pc.iceConnectionState);
     pc.addTransceiver('audio', { direction: 'recvonly' });
     // Play remote audio
     pc.ontrack = (ev)=>{ remoteAudio.srcObject = ev.streams[0]; };
@@ -861,7 +880,10 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
 
     // Create a data channel for optional events (not required)
     dc = pc.createDataChannel('oai-events');
-    dc.onopen = () => console.log('[MAXNET] data channel open');
+    dc.onopen = () => {
+      console.log('[MAXNET] data channel open');
+      if (pendingSpeak) { requestSpeak(); pendingSpeak = false; }
+    };
     dc.onerror = (e) => console.warn('[MAXNET] data channel error', e);
 
     // We do NOT attach mic tracks permanently. We only add/remove while holding.
@@ -905,21 +927,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     // Remove mic tracks to signal end of utterance
     const senders = pc.getSenders();
     senders.forEach(s=>{ if (s.track && s.track.kind === 'audio') pc.removeTrack(s); });
-    try {
-      if (dc && dc.readyState === 'open') {
-        dc.send(JSON.stringify({
-          type: 'response.create',
-          response: {
-            modalities: ['audio'],
-            instructions: 'You are MAXNET – a playful Gen Z walkie bot. Keep replies short and conversational; respond to what I just said.'
-          }
-        }));
-      } else {
-        console.warn('Data channel not open; cannot request response');
-      }
-    } catch (err) {
-      console.warn('Failed to send response.create', err);
-    }
+    requestSpeak();
     pttStatus.textContent = 'Ready — hold to speak';
   }
 
