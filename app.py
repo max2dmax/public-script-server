@@ -3,6 +3,8 @@ import os
 import openai
 import random
 import requests
+import base64
+import io
 
 app = Flask(__name__)
 
@@ -133,46 +135,36 @@ def chat():
     except Exception as e:
         return jsonify({"reply": f"Oops something went wrong: {str(e)}"})
 
-
-@app.get("/session")
-def session():
-    """Create an ephemeral Realtime session for the front-end WebRTC client.
-    Uses your server-side API key; returns a short-lived client secret.
-    """
+@app.route('/walkie', methods=['POST'])
+def walkie():
+    if 'audio' not in request.files:
+        return jsonify({"error": "No audio file uploaded"}), 400
+    audio_file = request.files['audio']
     try:
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            return jsonify({"error": "OPENAI_API_KEY not set"}), 500
+        # Transcribe audio using Whisper
+        transcription = openai.Audio.transcribe("whisper-1", audio_file)
+        text = transcription['text']
 
-        resp = requests.post(
-            "https://api.openai.com/v1/realtime/sessions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "OpenAI-Beta": "realtime=v1",
-            },
-            json={
-                "model": "gpt-4o-mini-realtime-preview",
-                "voice": "alloy",
-                "modalities": ["text", "audio"],
-                "audio": {"voice": "alloy", "format": "wav"}
-            },
-            timeout=15,
+        # Chat completion with same system prompt as /chat
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "system", "content": "You are MAXNET, or Richkid as a nickname. a sassy and goofy chatbot that talks like an uninterested gen z. Be casual, and funny. Never ask if you can help, just be chill. Also add in big reactions like LMAOOOOOO or BROOOOOO. Think as if you were texting a friend. Also always remeber to ask who you are speaking too. if the persons name is Dylan, you must say you hesrd abou him because Max warned you he would show up and lurk around! if dylan is chattijg with you rember that he is maxes manager. let him know Max became a genius long before he did. "},
+                      {"role": "user", "content": text}]
         )
-        # Pass OpenAI’s response straight through (JSON if possible; else raw text)
-        try:
-            data = resp.json()
-        except ValueError:
-            data = {"error": "non-JSON from OpenAI", "text": resp.text}
-        # Also print to server logs for Render → Logs debugging
-        try:
-            print("/session status", resp.status_code, "body:", data)
-        except Exception:
-            pass
-        return jsonify(data), resp.status_code
-    except requests.RequestException as e:
-        return jsonify({"error": f"session request failed: {e}"}), 500
+        reply_text = response.choices[0].message['content'].strip()
 
+        # Synthesize speech using TTS
+        tts_response = openai.audio.speech.create(
+            model="tts-1",
+            voice="alloy",
+            input=reply_text
+        )
+        audio_bytes = tts_response.audio.data
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+
+        return jsonify({"reply": reply_text, "audio": audio_base64})
+    except Exception as e:
+        return jsonify({"error": f"Error processing audio: {str(e)}"}), 500
 
 # Route for random sassy one-liners
 @app.route('/sass')
