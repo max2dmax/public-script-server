@@ -87,9 +87,29 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
             transition: transform .08s ease, box-shadow .15s ease, border-color .2s ease, background-color .2s ease, color .2s ease;
         }
 
+        /* Stack spacing and width control */
+        .terminal-box details {
+            margin: 0.6rem auto;          /* space between rows */
+            max-width: 780px;             /* not so long on desktop */
+        }
+
         details > summary::-webkit-details-marker { display: none; }
 
-        details > summary::after { content: "▼"; font-size: .9em; opacity: .9; }
+        details > summary::after {
+            content: "▼";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 26px;
+            height: 26px;
+            padding: 0 6px;
+            border: 1.5px solid var(--accent);
+            border-radius: 8px;
+            background: transparent;
+            font-size: .85em;
+            line-height: 1;
+            opacity: .95;
+        }
 
         details[open] > summary::after { content: "▲"; }
 
@@ -234,6 +254,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
             .terminal-box { max-width: 100%; margin: 1rem auto; padding: 0.75rem; box-shadow: 0 0 10px #33ff33; }
             .script { margin-bottom: 1rem; }
             a { font-size: 1rem; }
+            .terminal-box details { max-width: 100%; margin: 0.6rem 0; }
             details > summary { font-size: 1.1rem; padding: 0.75rem 0.9rem; width: 100%; }
             button, .custom-file-upload { width: 100%; margin: 0.5rem 0 0; height: 48px; line-height: 48px; font-size: 1rem; }
             /* Top toggle buttons — mobile layout */
