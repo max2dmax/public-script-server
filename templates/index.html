@@ -827,168 +827,128 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     });
 </script>
 <script>
-// === MAXNET Push-to-Talk (Realtime API over WebRTC) ===
+// === MAXNET Push-to-Talk (Non‑Realtime: STT -> Chat -> TTS) ===
 (function(){
   const pttBtn = document.getElementById('pttButton');
   const pttStatus = document.getElementById('pttStatus');
   const pttLevel = document.getElementById('pttLevel');
   if (!pttBtn) return;
 
-  let pc; let micStream; let remoteAudio; let initialized = false; let sending = false; let dc;
-  let pendingSpeak = false;
-  function waitForDCOpen(timeoutMs = 2000){
-    return new Promise((resolve) => {
-      if (dc && dc.readyState === 'open') return resolve(true);
-      const start = Date.now();
-      const iv = setInterval(() => {
-        if (dc && dc.readyState === 'open') { clearInterval(iv); resolve(true); }
-        else if (Date.now() - start > timeoutMs) { clearInterval(iv); resolve(false); }
-      }, 50);
-    });
-  }
+  let mediaRecorder; let chunks = []; let micStream; let recording = false;
+  let audioCtx, analyser, dataArr, meterRAF;
 
-  // Wait for ICE gathering to complete (max timeoutMs ms)
-  function waitForIceGatheringComplete(pc, timeoutMs = 4000){
-    return new Promise((resolve)=>{
-      if (pc.iceGatheringState === 'complete') return resolve(true);
-      const start = Date.now();
-      const onChange = ()=>{
-        if (pc.iceGatheringState === 'complete') { cleanup(); resolve(true); }
-        else if (Date.now() - start > timeoutMs) { cleanup(); resolve(false); }
-      };
-      const cleanup = ()=>{
-        pc.removeEventListener('icegatheringstatechange', onChange);
-      };
-      pc.addEventListener('icegatheringstatechange', onChange);
-    });
-  }
-  async function requestSpeak(){
-    if (!dc) { console.warn('[MAXNET] no data channel yet'); pendingSpeak = true; return; }
-    if (dc.readyState !== 'open') {
-      console.warn('[MAXNET] data channel not open; waiting…');
-      const ok = await waitForDCOpen(2500);
-      if (!ok) { console.warn('[MAXNET] data channel still closed after wait'); pendingSpeak = true; return; }
-    }
-    try {
-      dc.send(JSON.stringify({
-        type: 'response.create',
-        response: {
-          modalities: ['audio'],
-          instructions: 'You are MAXNET – a playful Gen Z walkie bot. Keep replies short and conversational; respond to what I just said.'
-        }
-      }));
-      console.log('[MAXNET] response.create sent');
-    } catch (e) {
-      console.warn('[MAXNET] response.create send error', e);
-    }
-  }
-
-  async function initConnection(){
-    if (initialized) return;
-    initialized = true;
-    // Create audio sink for model output
-    remoteAudio = document.createElement('audio');
-    remoteAudio.autoplay = true;
-    remoteAudio.playsInline = true;
-    document.body.appendChild(remoteAudio);
-
-    // Prepare mic access
+  async function ensureMic(){
+    if (micStream) return;
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  }
 
-    pc = new RTCPeerConnection();
-    pc.onconnectionstatechange = ()=> console.log('[MAXNET] pc.connectionState =', pc.connectionState);
-    pc.oniceconnectionstatechange = ()=> console.log('[MAXNET] pc.iceConnectionState =', pc.iceConnectionState);
-    pc.onicegatheringstatechange = ()=> console.log('[MAXNET] pc.iceGatheringState =', pc.iceGatheringState);
-    // Small ICE candidate log for debugging
-    pc.onicecandidate = (e)=>{ if(!e.candidate) { console.log('[MAXNET] ICE gathering complete'); } };
-    pc.addTransceiver('audio', { direction: 'recvonly' });
-    // Play remote audio
-    pc.ontrack = (ev)=>{ remoteAudio.srcObject = ev.streams[0]; };
-
-    // Get ephemeral client secret from your server
-    const tokenRes = await fetch('/session');
-    if (!tokenRes.ok) {
-      const txt = await tokenRes.text();
-      console.error('[MAXNET] /session failed', tokenRes.status, txt);
-      pttStatus.textContent = 'Session error (' + tokenRes.status + '). Check server key/access.';
-      try { flashColor('red', 'SESSION ERROR ' + tokenRes.status); } catch(_) {}
-      initialized = false; // allow retry on next press
-      return;
+  function startMeter(){
+    if (!micStream) return;
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      const src = audioCtx.createMediaStreamSource(micStream);
+      analyser = audioCtx.createAnalyser(); analyser.fftSize = 256; src.connect(analyser);
+      dataArr = new Uint8Array(analyser.frequencyBinCount);
     }
-    const sess = await tokenRes.json();
-    const clientSecret = (sess && sess.client_secret && (sess.client_secret.value || sess.client_secret)) || sess.value;
-    if (!clientSecret) {
-      console.error('[MAXNET] /session missing client_secret', sess);
-      pttStatus.textContent = 'No client secret from server. Check app.py or env key.';
-      initialized = false;
-      return;
-    }
-
-    // Create a data channel for optional events (not required)
-    dc = pc.createDataChannel('oai-events');
-    dc.onopen = () => {
-      console.log('[MAXNET] data channel open');
-      if (pendingSpeak) { requestSpeak(); pendingSpeak = false; }
+    const tick = ()=>{
+      if (!analyser) return; analyser.getByteTimeDomainData(dataArr);
+      let max=0; for (let i=0;i<dataArr.length;i++){ const v=Math.abs(dataArr[i]-128); if(v>max) max=v; }
+      const pct = Math.min(100, Math.floor((max/128)*140));
+      if (pttLevel) pttLevel.style.width = recording ? pct+"%" : "0%";
+      meterRAF = requestAnimationFrame(tick);
     };
-    dc.onerror = (e) => console.warn('[MAXNET] data channel error', e);
+    meterRAF = requestAnimationFrame(tick);
+  }
+  function stopMeter(){ if (meterRAF) cancelAnimationFrame(meterRAF); if (pttLevel) pttLevel.style.width = '0%'; }
 
-    // We do NOT attach mic tracks permanently. We only add/remove while holding.
-    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
-    await pc.setLocalDescription(offer);
-    const iceOk = await waitForIceGatheringComplete(pc, 5000);
-    if (!iceOk) console.warn('[MAXNET] ICE gathering timed out; proceeding with partial candidates');
+  async function startTalking(){
+    try {
+      await ensureMic();
+    } catch (e) {
+      console.error('Mic permission denied', e);
+      pttStatus.textContent = 'Mic permission needed';
+      try { flashColor('red','MIC BLOCKED'); } catch(_) {}
+      return;
+    }
 
-    const local = pc.localDescription;
-    const base = 'https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview';
-    const sdpAnswer = await fetch(base, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${clientSecret}`, 'Content-Type': 'application/sdp' },
-      body: local.sdp
-    }).then(r=>r.text());
-    await pc.setRemoteDescription({ type:'answer', sdp: sdpAnswer });
+    chunks = []; recording = true;
+    pttBtn.classList.add('listening');
+    pttStatus.textContent = 'Recording… release to send';
 
-    pttStatus.textContent = 'Ready — hold to speak';
+    const mimeCandidates = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4',
+      'audio/ogg;codecs=opus'
+    ];
+    let mimeType = '';
+    for (const m of mimeCandidates){ if (MediaRecorder.isTypeSupported(m)) { mimeType = m; break; } }
+
+    try {
+      mediaRecorder = new MediaRecorder(micStream, mimeType ? { mimeType } : undefined);
+    } catch(err){
+      console.error('MediaRecorder failed', err);
+      pttStatus.textContent = 'Recording not supported in this browser';
+      recording = false; pttBtn.classList.remove('listening');
+      return;
+    }
+
+    mediaRecorder.ondataavailable = e=>{ if (e.data && e.data.size) chunks.push(e.data); };
+    mediaRecorder.start();
+    startMeter();
   }
 
-  // Quick RMS meter for vibes
-  let audioCtx, analyser, dataArr;
-  function ensureMeter(){
-    if (audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const src = audioCtx.createMediaStreamSource(micStream);
-    analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
-    src.connect(analyser); dataArr = new Uint8Array(analyser.frequencyBinCount);
-    const tick = ()=>{ if (!analyser) return; analyser.getByteTimeDomainData(dataArr); let max=0; for (let i=0;i<dataArr.length;i++){ const v=Math.abs(dataArr[i]-128); if(v>max) max=v; } const pct=Math.min(100, Math.floor((max/128)*140)); if (pttLevel) pttLevel.style.width = sending ? pct+"%" : "0%"; requestAnimationFrame(tick); };
-    tick();
+  async function stopTalking(){
+    if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+    recording = false; pttBtn.classList.remove('listening');
+    pttStatus.textContent = 'Sending…';
+    stopMeter();
+
+    mediaRecorder.onstop = async ()=>{
+      try {
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        const fd = new FormData();
+        fd.append('audio', blob, 'ptt.webm');
+
+        const resp = await fetch('/walkie', { method: 'POST', body: fd });
+        if (!resp.ok) {
+          const txt = await resp.text();
+          console.error('Walkie error', resp.status, txt);
+          pttStatus.textContent = 'Walkie error ' + resp.status;
+          try { flashColor('red','WALKIE '+resp.status); } catch(_) {}
+          return;
+        }
+        const data = await resp.json();
+        if (data.error) {
+          console.error('Walkie error', data.error);
+          pttStatus.textContent = 'Walkie error';
+          try { flashColor('red','WALKIE ERROR'); } catch(_) {}
+          return;
+        }
+        // Play audio (base64)
+        if (data.audio) {
+          const a = new Audio('data:audio/mpeg;base64,' + data.audio);
+          a.play().catch(()=>{});
+        }
+        pttStatus.textContent = 'MAXNET: ' + (data.reply || '…');
+      } catch (e) {
+        console.error('Walkie fail', e);
+        pttStatus.textContent = 'Walkie failure';
+        try { flashColor('red','WALKIE FAIL'); } catch(_) {}
+      }
+    };
+    mediaRecorder.stop();
   }
 
-  function startTalking(){
-    if (!pc || !micStream) return;
-    if (sending) return;
-    sending = true; pttBtn.classList.add('listening'); pttStatus.textContent = 'Listening… release to send';
-    // Attach mic tracks while held
-    micStream.getTracks().forEach(t=> pc.addTrack(t, micStream));
-    ensureMeter();
-  }
-
-  function stopTalking(){
-    if (!pc) return; if (!sending) return; sending = false; pttBtn.classList.remove('listening'); pttStatus.textContent = 'Sending…';
-    // Remove mic tracks to signal end of utterance
-    const senders = pc.getSenders();
-    senders.forEach(s=>{ if (s.track && s.track.kind === 'audio') pc.removeTrack(s); });
-    requestSpeak();
-    pttStatus.textContent = 'Ready — hold to speak';
-  }
-
-  // Init on first interaction for permissions
-  pttBtn.addEventListener('pointerdown', async ()=>{ if(!initialized){ await initConnection(); } startTalking(); });
+  // Bind events
+  pttBtn.addEventListener('pointerdown', startTalking);
   pttBtn.addEventListener('pointerup', stopTalking);
   pttBtn.addEventListener('pointerleave', stopTalking);
   pttBtn.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ e.preventDefault(); startTalking(); }});
-  pttBtn.addEventListener('keyup',   (e)=>{ if(e.code==='Space'){ e.preventDefault(); stopTalking();  }});
+  pttBtn.addEventListener('keyup',   (e)=>{ if(e.code==='Space'){ e.preventDefault(); stopTalking(); }});
 
-  // Global Spacebar shortcut when button is visible
-  document.addEventListener('keydown', (e)=>{ if(e.code==='Space' && !(document.activeElement && document.activeElement.id==='userInput')){ e.preventDefault(); if(!initialized){ initConnection(); } startTalking(); }});
+  // Global Spacebar shortcut when button is visible and input not focused
+  document.addEventListener('keydown', (e)=>{ if(e.code==='Space' && !(document.activeElement && document.activeElement.id==='userInput')){ e.preventDefault(); startTalking(); }});
   document.addEventListener('keyup',   (e)=>{ if(e.code==='Space' && !(document.activeElement && document.activeElement.id==='userInput')){ e.preventDefault(); stopTalking(); }});
 })();
 </script>
