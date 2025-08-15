@@ -2,6 +2,7 @@ from flask import Flask, render_template, send_from_directory, request, jsonify
 import os
 import openai
 import random
+import requests
 
 app = Flask(__name__)
 
@@ -131,6 +132,32 @@ def chat():
         return jsonify({"reply": reply})
     except Exception as e:
         return jsonify({"reply": f"Oops something went wrong: {str(e)}"})
+
+
+@app.get("/session")
+def session():
+    """Create an ephemeral Realtime session for the front-end WebRTC client.
+    Uses your server-side API key; returns a short-lived client secret.
+    """
+    try:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            return jsonify({"error": "OPENAI_API_KEY not set"}), 500
+
+        resp = requests.post(
+            "https://api.openai.com/v1/realtime/sessions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "gpt-4o-realtime-preview"
+            },
+            timeout=15,
+        )
+        return jsonify(resp.json()), resp.status_code
+    except requests.RequestException as e:
+        return jsonify({"error": f"session request failed: {e}"}), 500
 
 
 # Route for random sassy one-liners
