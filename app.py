@@ -158,7 +158,17 @@ def session():
             },
             timeout=15,
         )
-        return jsonify(resp.json()), resp.status_code
+        # Pass OpenAI’s response straight through (JSON if possible; else raw text)
+        try:
+            data = resp.json()
+        except ValueError:
+            data = {"error": "non-JSON from OpenAI", "text": resp.text}
+        # Also print to server logs for Render → Logs debugging
+        try:
+            print("/session status", resp.status_code, "body:", data)
+        except Exception:
+            pass
+        return jsonify(data), resp.status_code
     except requests.RequestException as e:
         return jsonify({"error": f"session request failed: {e}"}), 500
 
