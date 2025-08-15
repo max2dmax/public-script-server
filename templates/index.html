@@ -296,6 +296,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         #pttButton .led { position:absolute; top:8px; right:8px; width:10px; height:10px; border-radius:50%; border:1px solid var(--accent); background:#081; box-shadow: 0 0 10px rgba(0,255,0,.6); }
         #pttButton.listening .led { background:#f33; box-shadow: 0 0 10px rgba(255,0,0,.6); }
         .ptt-hint { font-size:.8rem; opacity:.7; text-align:center; margin-top:.25rem; }
+        .ptt-transcript { margin-top: 4px; }
         @media (max-width: 600px){ .ptt-radio { grid-template-columns: 1fr; } .ptt-handset{ order:-1; } #pttButton{ width:100%; height:64px; border-radius:10px; } }
 
         /* --- Mobile-friendly tweaks --- */
@@ -334,6 +335,9 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
       <div class="ptt-face">
         <div class="ptt-title">MAXNET Walkie • Push‑to‑Talk</div>
         <div class="ptt-status" id="pttStatus">Idle — hold to speak</div>
+        <div class="ptt-transcript" id="pttTranscript" style="font-family: var(--font-mono); font-size:.85rem; opacity:.9; word-break: break-word; display:none;">
+          <strong>You said:</strong> <span id="pttTranscriptText"></span>
+        </div>
         <div class="ptt-meter"><div class="ptt-level" id="pttLevel" style="width:0%"></div></div>
         <div class="ptt-hint">Hold button or press <kbd>Space</kbd> to talk • Release to send</div>
       </div>
@@ -911,17 +915,37 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         fd.append('audio', blob, 'ptt.webm');
 
         const resp = await fetch('/walkie', { method: 'POST', body: fd });
+        // Helper to clear transcript
+        function clearTranscript(){
+          try {
+            const tWrap = document.getElementById('pttTranscript');
+            const tText = document.getElementById('pttTranscriptText');
+            if (tWrap && tText) { tText.textContent = ''; tWrap.style.display = 'none'; }
+          } catch(_) {}
+        }
         if (!resp.ok) {
           const txt = await resp.text();
           console.error('Walkie error', resp.status, txt);
           pttStatus.textContent = 'Walkie error ' + resp.status;
+          clearTranscript();
           try { flashColor('red','WALKIE '+resp.status); } catch(_) {}
           return;
         }
         const data = await resp.json();
+        // Show transcript if provided
+        if (data.transcript !== undefined) {
+          const tWrap = document.getElementById('pttTranscript');
+          const tText = document.getElementById('pttTranscriptText');
+          if (tWrap && tText) {
+            tText.textContent = (data.transcript || '').trim();
+            tWrap.style.display = data.transcript ? 'block' : 'none';
+          }
+          console.log('[MAXNET] transcript:', data.transcript);
+        }
         if (data.error) {
           console.error('Walkie error', data.error);
           pttStatus.textContent = 'Walkie error';
+          clearTranscript();
           try { flashColor('red','WALKIE ERROR'); } catch(_) {}
           return;
         }
@@ -934,6 +958,15 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
       } catch (e) {
         console.error('Walkie fail', e);
         pttStatus.textContent = 'Walkie failure';
+        // Clear transcript on error
+        function clearTranscript(){
+          try {
+            const tWrap = document.getElementById('pttTranscript');
+            const tText = document.getElementById('pttTranscriptText');
+            if (tWrap && tText) { tText.textContent = ''; tWrap.style.display = 'none'; }
+          } catch(_) {}
+        }
+        clearTranscript();
         try { flashColor('red','WALKIE FAIL'); } catch(_) {}
       }
     };
