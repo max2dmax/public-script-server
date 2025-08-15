@@ -132,24 +132,20 @@
             display: none;
         }
 
-        /* Fixed top button bar for better mobile layout */
+        /* Button bar under the title */
         #topButtons {
             display: none; /* revealed after boot */
-            position: fixed;
-            top: 10px;
-            left: 0;
-            right: 0;
+            position: static;
+            margin: 0.5rem auto 0;
+            max-width: 920px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            padding: 0 10px;
-            z-index: 10000;
-            pointer-events: none; /* container lets clicks pass except on buttons */
+            padding: 0;
         }
         #topButtons > button {
-            position: static; /* override any legacy fixed rules */
-            pointer-events: auto;
+            position: static;
             white-space: nowrap;
         }
 
@@ -211,9 +207,9 @@
             details > summary { font-size: 1.1rem; padding: 0.75rem 0; }
             button, .custom-file-upload { width: 100%; margin: 0.5rem 0 0; height: 48px; line-height: 48px; font-size: 1rem; }
             /* Top toggle buttons — mobile layout */
-            #topButtons { top: 8px; gap: 8px; padding: 0 8px; justify-content: space-between; }
+            #topButtons { gap: 8px; padding: 0 8px; justify-content: space-between; flex-wrap: wrap; }
             #topButtons > button {
-                flex: 1 1 auto;
+                flex: 1 1 30%;
                 min-width: 0;
                 padding: 0.6rem 0.7rem;
                 font-size: 0.95rem;
@@ -229,13 +225,12 @@
     </style>
 </head>
 <body>
+    <h1 id="maxnetTitle" style="text-align: center; font-size: 3rem; margin-top: 1rem;">MAXNET</h1>
     <div id="topButtons">
       <button id="toggleButton">Toggle Red Alert Mode</button>
       <button id="midnightToggleButton">Toggle Midnight Mode</button>
       <button id="exitChaosButton">Exit Chaos Mode</button>
     </div>
-
-    <h1 id="maxnetTitle" style="text-align: center; font-size: 3rem; margin-top: 1rem;">MAXNET</h1>
 
     <audio id="alarm" class="hidden" preload="auto">
         <source src="{{ url_for('static', filename='audio/Red_Alert.mp3') }}" type="audio/mpeg">
