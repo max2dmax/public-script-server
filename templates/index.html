@@ -836,11 +836,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
   const pttLevel = document.getElementById('pttLevel');
   if (!pttBtn) return;
 
-  let pc;               // RTCPeerConnection
-  let micStream;        // MediaStream from getUserMedia
-  let remoteAudio;      // <audio> sink
-  let initialized = false;
-  let sending = false;
+  let pc; let micStream; let remoteAudio; let initialized = false; let sending = false; let dc;
 
   async function initConnection(){
     if (initialized) return;
@@ -864,7 +860,9 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     const { client_secret } = await tokenRes.json();
 
     // Create a data channel for optional events (not required)
-    const dc = pc.createDataChannel('oai-events');
+    dc = pc.createDataChannel('oai-events');
+    dc.onopen = () => console.log('[MAXNET] data channel open');
+    dc.onerror = (e) => console.warn('[MAXNET] data channel error', e);
 
     // We do NOT attach mic tracks permanently. We only add/remove while holding.
     const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
@@ -908,7 +906,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     const senders = pc.getSenders();
     senders.forEach(s=>{ if (s.track && s.track.kind === 'audio') pc.removeTrack(s); });
     try {
-      if (typeof dc !== 'undefined' && dc && dc.readyState === 'open') {
+      if (dc && dc.readyState === 'open') {
         dc.send(JSON.stringify({
           type: 'response.create',
           response: {
