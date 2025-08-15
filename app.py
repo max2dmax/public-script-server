@@ -152,7 +152,7 @@ def session():
                 "OpenAI-Beta": "realtime=v1",
             },
             json={
-                "model": "gpt-4o-realtime-preview",
+                "model": "gpt-4o-mini-realtime-preview",
                 "voice": "alloy",
                 "modalities": ["text", "audio"],
                 "audio": {"voice": "alloy", "format": "wav"}
