@@ -153,14 +153,31 @@ def walkie():
         )
         reply_text = response.choices[0].message['content'].strip()
 
-        # Synthesize speech using TTS
-        tts_response = openai.audio.speech.create(
-            model="tts-1",
-            voice="alloy",
-            input=reply_text
+        # Synthesize speech using TTS (via HTTP to avoid SDK version issues)
+        tts_response = requests.post(
+            "https://api.openai.com/v1/audio/speech",
+            headers={
+                "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "gpt-4o-mini-tts",  # or "tts-1" if preferred
+                "voice": "alloy",
+                "input": reply_text,
+                "format": "mp3",
+            },
+            timeout=60,
         )
-        audio_bytes = tts_response.audio.data
-        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        if tts_response.status_code != 200:
+            return jsonify({
+                "error": "tts_failed",
+                "status": tts_response.status_code,
+                "body": tts_response.text,
+                "reply": reply_text,
+            }), 502
+
+        audio_bytes = tts_response.content
+        audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
 
         return jsonify({"reply": reply_text, "audio": audio_base64})
     except Exception as e:
