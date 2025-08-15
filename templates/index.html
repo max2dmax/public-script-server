@@ -290,6 +290,32 @@
                 </ul>
             </div>
         </details>
+
+        <details>
+            <summary><strong>🎮 Games</strong></summary>
+            <div class="script" id="twentyQ">
+                <h3>20 Questions: MAXNET Edition</h3>
+                <p id="twentyQ-status">Think of an object. I'll try to guess it in 20 questions. Answer honestly, bestie 😌</p>
+                <div id="twentyQ-questionBox" class="terminal-box" style="margin-top:0.5rem;">
+                    <p id="twentyQ-question">Click "Start" to begin!</p>
+                    <div id="twentyQ-controls" class="hidden" style="margin-top:0.5rem;">
+                        <button id="twentyQ-yes">Yes</button>
+                        <button id="twentyQ-no">No</button>
+                        <button id="twentyQ-maybe">Maybe/Unknown</button>
+                    </div>
+                    <div style="margin-top:0.5rem;">
+                        <button id="twentyQ-start">Start</button>
+                        <button id="twentyQ-reset" class="hidden">Reset</button>
+                    </div>
+                    <div id="twentyQ-guessBox" class="hidden" style="margin-top:0.75rem;">
+                        <p><strong>My guess:</strong> <span id="twentyQ-guessText"></span></p>
+                        <button id="twentyQ-correct">Correct!</button>
+                        <button id="twentyQ-incorrect">Nope</button>
+                    </div>
+                    <p id="twentyQ-remaining" style="opacity:0.7;margin-top:0.5rem;">Remaining candidates: —</p>
+                </div>
+            </div>
+        </details>
     </div>
 
     <!-- 🎧 Lo-fi BGM -->
@@ -668,4 +694,165 @@ userInput.addEventListener("keypress", async function(e) {
 });
 </script>
 </body>
+<script>
+// === 20 Questions: MAXNET Edition (client-side engine) ===
+(function(){
+  const startBtn = document.getElementById('twentyQ-start');
+  const resetBtn = document.getElementById('twentyQ-reset');
+  const yesBtn = document.getElementById('twentyQ-yes');
+  const noBtn = document.getElementById('twentyQ-no');
+  const maybeBtn = document.getElementById('twentyQ-maybe');
+  const controls = document.getElementById('twentyQ-controls');
+  const qEl = document.getElementById('twentyQ-question');
+  const statusEl = document.getElementById('twentyQ-status');
+  const remainEl = document.getElementById('twentyQ-remaining');
+  const guessBox = document.getElementById('twentyQ-guessBox');
+  const guessText = document.getElementById('twentyQ-guessText');
+  const correctBtn = document.getElementById('twentyQ-correct');
+  const incorrectBtn = document.getElementById('twentyQ-incorrect');
+
+  if (!startBtn) return; // page guard
+
+  // A tiny knowledge base of objects & attributes
+  const KB = [
+    {name:'cat', alive:true, animal:true, plant:false, manmade:false, electronic:false, bigger:false, home:true, outdoors:true, edible:false, vehicle:false, musical:false, work:false},
+    {name:'dog', alive:true, animal:true, plant:false, manmade:false, electronic:false, bigger:false, home:true, outdoors:true, edible:false, vehicle:false, musical:false, work:false},
+    {name:'tree', alive:true, animal:false, plant:true, manmade:false, electronic:false, bigger:true, home:false, outdoors:true, edible:false, vehicle:false, musical:false, work:false},
+    {name:'rose', alive:true, animal:false, plant:true, manmade:false, electronic:false, bigger:false, home:true, outdoors:true, edible:false, vehicle:false, musical:false, work:false},
+    {name:'apple', alive:false, animal:false, plant:false, manmade:false, electronic:false, bigger:false, home:true, outdoors:true, edible:true, vehicle:false, musical:false, work:false},
+    {name:'pizza', alive:false, animal:false, plant:false, manmade:true, electronic:false, bigger:false, home:true, outdoors:false, edible:true, vehicle:false, musical:false, work:false},
+    {name:'guitar', alive:false, animal:false, plant:false, manmade:true, electronic:false, bigger:false, home:true, outdoors:true, edible:false, vehicle:false, musical:true, work:true},
+    {name:'piano', alive:false, animal:false, plant:false, manmade:true, electronic:false, bigger:true, home:true, outdoors:false, edible:false, vehicle:false, musical:true, work:true},
+    {name:'microphone', alive:false, animal:false, plant:false, manmade:true, electronic:true, bigger:false, home:true, outdoors:true, edible:false, vehicle:false, musical:true, work:true},
+    {name:'laptop', alive:false, animal:false, plant:false, manmade:true, electronic:true, bigger:false, home:true, outdoors:false, edible:false, vehicle:false, musical:false, work:true},
+    {name:'smartphone', alive:false, animal:false, plant:false, manmade:true, electronic:true, bigger:false, home:true, outdoors:true, edible:false, vehicle:false, musical:false, work:true},
+    {name:'camera', alive:false, animal:false, plant:false, manmade:true, electronic:true, bigger:false, home:true, outdoors:true, edible:false, vehicle:false, musical:false, work:true},
+    {name:'bicycle', alive:false, animal:false, plant:false, manmade:true, electronic:false, bigger:false, home:false, outdoors:true, edible:false, vehicle:true, musical:false, work:false},
+    {name:'car', alive:false, animal:false, plant:false, manmade:true, electronic:true, bigger:true, home:false, outdoors:true, edible:false, vehicle:true, musical:false, work:false},
+    {name:'airplane', alive:false, animal:false, plant:false, manmade:true, electronic:true, bigger:true, home:false, outdoors:true, edible:false, vehicle:true, musical:false, work:false},
+    {name:'chair', alive:false, animal:false, plant:false, manmade:true, electronic:false, bigger:false, home:true, outdoors:false, edible:false, vehicle:false, musical:false, work:true},
+    {name:'book', alive:false, animal:false, plant:false, manmade:true, electronic:false, bigger:false, home:true, outdoors:false, edible:false, vehicle:false, musical:false, work:true},
+    {name:'coffee', alive:false, animal:false, plant:false, manmade:true, electronic:false, bigger:false, home:true, outdoors:false, edible:true, vehicle:false, musical:false, work:true},
+    {name:'rocket', alive:false, animal:false, plant:false, manmade:true, electronic:true, bigger:true, home:false, outdoors:true, edible:false, vehicle:true, musical:false, work:true},
+    {name:'robot', alive:false, animal:false, plant:false, manmade:true, electronic:true, bigger:false, home:true, outdoors:false, edible:false, vehicle:false, musical:false, work:true}
+  ];
+
+  // Attribute questions (ordered). Each maps to KB property.
+  const QUESTIONS = [
+    {key:'alive', text:'Is it alive?'},
+    {key:'animal', text:'Is it an animal?'},
+    {key:'plant', text:'Is it a plant?'},
+    {key:'manmade', text:'Is it man‑made?'},
+    {key:'electronic', text:'Does it use electricity?'},
+    {key:'bigger', text:'Is it bigger than a breadbox?'},
+    {key:'vehicle', text:'Is it used for transportation?'},
+    {key:'musical', text:'Is it used to make music?'},
+    {key:'edible', text:'Can you eat it?'},
+    {key:'home', text:'Would you commonly find it at home?'},
+    {key:'outdoors', text:'Would you commonly find it outdoors?'},
+    {key:'work', text:'Do you usually use it for work?'}
+  ];
+
+  let remaining = []; // remaining candidates
+  let qi = 0; // question index
+  let qCount = 0; // asked count
+
+  function updateRemaining() {
+    remainEl.textContent = 'Remaining candidates: ' + remaining.length;
+  }
+
+  function askNext() {
+    if (qCount >= 20) {
+      // Force a guess
+      return makeGuess();
+    }
+    // If only 1–2 remain, guess
+    if (remaining.length <= 2 && remaining.length > 0) {
+      return makeGuess();
+    }
+    // If ran out of questions, guess
+    if (qi >= QUESTIONS.length) {
+      return makeGuess();
+    }
+    qEl.textContent = QUESTIONS[qi].text;
+  }
+
+  function applyAnswer(answer) {
+    const key = QUESTIONS[qi].key;
+    if (answer === 'yes') {
+      remaining = remaining.filter(x => x[key] === true);
+      qCount++;
+      qi++;
+    } else if (answer === 'no') {
+      remaining = remaining.filter(x => x[key] === false);
+      qCount++;
+      qi++;
+    } else {
+      // maybe/unknown: soft advance without filter
+      qCount++;
+      qi++;
+    }
+    updateRemaining();
+    askNext();
+  }
+
+  function makeGuess() {
+    if (remaining.length === 0) {
+      qEl.textContent = "I'm stumped… hit Reset or tell me in chat what it was 👀";
+      controls.classList.add('hidden');
+      guessBox.classList.add('hidden');
+      resetBtn.classList.remove('hidden');
+      return;
+    }
+    const pick = remaining[Math.floor(Math.random() * remaining.length)];
+    guessText.textContent = pick.name;
+    guessBox.classList.remove('hidden');
+    qEl.textContent = 'Is it ' + pick.name + '?';
+    controls.classList.add('hidden');
+  }
+
+  function resetGame() {
+    remaining = KB.slice();
+    qi = 0; qCount = 0;
+    updateRemaining();
+    qEl.textContent = 'Question 1: ' + QUESTIONS[0].text;
+    controls.classList.remove('hidden');
+    guessBox.classList.add('hidden');
+    startBtn.classList.add('hidden');
+    resetBtn.classList.add('hidden');
+    statusEl.textContent = 'Answer with Yes / No / Maybe. I get 20 shots.';
+  }
+
+  startBtn.addEventListener('click', resetGame);
+  resetBtn.addEventListener('click', () => {
+    startBtn.classList.add('hidden');
+    resetGame();
+  });
+  yesBtn.addEventListener('click', () => applyAnswer('yes'));
+  noBtn.addEventListener('click', () => applyAnswer('no'));
+  maybeBtn.addEventListener('click', () => applyAnswer('maybe'));
+
+  correctBtn.addEventListener('click', () => {
+    showSassToast('Yesssss. I stay winning 🏆');
+    qEl.textContent = 'GG. Play again?';
+    controls.classList.add('hidden');
+    guessBox.classList.add('hidden');
+    resetBtn.classList.remove('hidden');
+  });
+
+  incorrectBtn.addEventListener('click', () => {
+    // remove guessed item and keep going if we have questions left
+    const guessed = guessText.textContent;
+    remaining = remaining.filter(x => x.name !== guessed);
+    updateRemaining();
+    if (qCount < 20 && remaining.length > 0) {
+      controls.classList.remove('hidden');
+      guessBox.classList.add('hidden');
+      askNext();
+    } else {
+      makeGuess();
+    }
+  });
+})();
+</script>
 </html>
