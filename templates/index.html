@@ -838,7 +838,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
   const pttLevel = document.getElementById('pttLevel');
   if (!pttBtn) return;
 
-  let mediaRecorder; let chunks = []; let micStream; let recording = false;
+  let mediaRecorder; let chunks = []; let micStream; let recording = false; let pressAt = 0; let busy = false; const MIN_MS = 900;
   let audioCtx, analyser, dataArr, meterRAF;
 
   async function ensureMic(){
@@ -866,6 +866,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
   function stopMeter(){ if (meterRAF) cancelAnimationFrame(meterRAF); if (pttLevel) pttLevel.style.width = '0%'; }
 
   async function startTalking(){
+    if (busy) return;
     try {
       await ensureMic();
     } catch (e) {
@@ -876,15 +877,15 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     }
 
     chunks = []; recording = true;
+    pressAt = performance.now();
     pttBtn.classList.add('listening');
     pttStatus.textContent = 'Recording… release to send';
+    try { flashColor('#1a2', 'LISTENING'); } catch(_) {}
 
-    const mimeCandidates = [
-      'audio/webm;codecs=opus',
-      'audio/webm',
-      'audio/mp4',
-      'audio/ogg;codecs=opus'
-    ];
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const mimeCandidates = isSafari
+      ? ['audio/mp4', 'audio/mpeg', 'audio/webm;codecs=opus', 'audio/webm']
+      : ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
     let mimeType = '';
     for (const m of mimeCandidates){ if (MediaRecorder.isTypeSupported(m)) { mimeType = m; break; } }
 
@@ -898,79 +899,88 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     }
 
     mediaRecorder.ondataavailable = e=>{ if (e.data && e.data.size) chunks.push(e.data); };
-    mediaRecorder.start();
+    mediaRecorder.start(100); // flush chunks every 100ms
     startMeter();
   }
 
   async function stopTalking(){
     if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
     recording = false; pttBtn.classList.remove('listening');
-    pttStatus.textContent = 'Sending…';
-    stopMeter();
 
-    mediaRecorder.onstop = async ()=>{
-      try {
-        const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-        const fd = new FormData();
-        fd.append('audio', blob, 'ptt.webm');
+    const elapsed = performance.now() - pressAt;
+    const waitMore = Math.max(0, MIN_MS - elapsed);
+    pttStatus.textContent = waitMore ? 'Hold a sec…' : 'Sending…';
 
-        const resp = await fetch('/walkie', { method: 'POST', body: fd });
-        // Helper to clear transcript
-        function clearTranscript(){
-          try {
-            const tWrap = document.getElementById('pttTranscript');
-            const tText = document.getElementById('pttTranscriptText');
-            if (tWrap && tText) { tText.textContent = ''; tWrap.style.display = 'none'; }
-          } catch(_) {}
-        }
-        if (!resp.ok) {
-          const txt = await resp.text();
-          console.error('Walkie error', resp.status, txt);
-          pttStatus.textContent = 'Walkie error ' + resp.status;
-          clearTranscript();
-          try { flashColor('red','WALKIE '+resp.status); } catch(_) {}
-          return;
-        }
-        const data = await resp.json();
-        // Show transcript if provided
-        if (data.transcript !== undefined) {
-          const tWrap = document.getElementById('pttTranscript');
-          const tText = document.getElementById('pttTranscriptText');
-          if (tWrap && tText) {
-            tText.textContent = (data.transcript || '').trim();
-            tWrap.style.display = data.transcript ? 'block' : 'none';
+    setTimeout(()=>{
+      try { mediaRecorder.requestData(); } catch(_) {}
+      stopMeter();
+
+      mediaRecorder.onstop = async ()=>{
+        try {
+          const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+          chunks = [];
+          console.log('[PTT] recorded', blob.type, blob.size, 'bytes');
+          if (!blob || !blob.size || blob.size < 1500) { // ~1.5KB guard
+            pttStatus.textContent = 'Too short — try again';
+            try { const tWrap = document.getElementById('pttTranscript'); const tText = document.getElementById('pttTranscriptText'); if (tWrap && tText) { tText.textContent = ''; tWrap.style.display = 'none'; } } catch(_) {}
+            return;
           }
-          console.log('[MAXNET] transcript:', data.transcript);
-        }
-        if (data.error) {
-          console.error('Walkie error', data.error);
-          pttStatus.textContent = 'Walkie error';
-          clearTranscript();
-          try { flashColor('red','WALKIE ERROR'); } catch(_) {}
-          return;
-        }
-        // Play audio (base64)
-        if (data.audio) {
-          const a = new Audio('data:audio/mpeg;base64,' + data.audio);
-          a.play().catch(()=>{});
-        }
-        pttStatus.textContent = 'MAXNET: ' + (data.reply || '…');
-      } catch (e) {
-        console.error('Walkie fail', e);
-        pttStatus.textContent = 'Walkie failure';
-        // Clear transcript on error
-        function clearTranscript(){
-          try {
+
+          busy = true; pttBtn.disabled = true;
+          const fd = new FormData();
+          const type = (blob.type||'').toLowerCase();
+          const ext = type.includes('mp4') || type.includes('m4a') ? 'm4a' : (type.includes('ogg') ? 'ogg' : (type.includes('mpeg') ? 'mp3' : 'webm'));
+          fd.append('audio', blob, 'ptt.'+ext);
+
+          const resp = await fetch('/walkie', { method: 'POST', body: fd });
+
+          function clearTranscript(){
+            try { const tWrap = document.getElementById('pttTranscript'); const tText = document.getElementById('pttTranscriptText'); if (tWrap && tText) { tText.textContent = ''; tWrap.style.display = 'none'; } } catch(_) {}
+          }
+
+          if (!resp.ok) {
+            const txt = await resp.text();
+            console.error('Walkie error', resp.status, txt);
+            pttStatus.textContent = 'Walkie error ' + resp.status;
+            clearTranscript();
+            try { flashColor('red','WALKIE '+resp.status); } catch(_) {}
+            return;
+          }
+
+          const data = await resp.json();
+          if (data.transcript !== undefined) {
             const tWrap = document.getElementById('pttTranscript');
             const tText = document.getElementById('pttTranscriptText');
-            if (tWrap && tText) { tText.textContent = ''; tWrap.style.display = 'none'; }
-          } catch(_) {}
+            if (tWrap && tText) {
+              tText.textContent = (data.transcript || '').trim();
+              tWrap.style.display = data.transcript ? 'block' : 'none';
+            }
+            console.log('[MAXNET] transcript:', data.transcript);
+          }
+
+          if (data.error) {
+            console.error('Walkie error', data);
+            pttStatus.textContent = 'Walkie: ' + (data.error || 'error');
+            clearTranscript();
+            return;
+          }
+
+          if (data.audio) {
+            const a = new Audio('data:audio/mpeg;base64,' + data.audio);
+            a.play().catch(()=>{});
+          }
+          pttStatus.textContent = 'MAXNET: ' + (data.reply || '…');
+        } catch (e) {
+          console.error('Walkie fail', e);
+          pttStatus.textContent = 'Walkie failure';
+          try { const tWrap = document.getElementById('pttTranscript'); const tText = document.getElementById('pttTranscriptText'); if (tWrap && tText) { tText.textContent = ''; tWrap.style.display = 'none'; } } catch(_) {}
+        } finally {
+          busy = false; pttBtn.disabled = false;
         }
-        clearTranscript();
-        try { flashColor('red','WALKIE FAIL'); } catch(_) {}
-      }
-    };
-    mediaRecorder.stop();
+      };
+
+      try { mediaRecorder.stop(); } catch(_) {}
+    }, waitMore);
   }
 
   // Bind events
