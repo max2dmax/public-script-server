@@ -838,9 +838,24 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
 
   let pc; let micStream; let remoteAudio; let initialized = false; let sending = false; let dc;
   let pendingSpeak = false;
-  function requestSpeak(){
-    if (!dc) { console.warn('[MAXNET] no data channel yet'); return; }
-    if (dc.readyState === 'open') {
+  function waitForDCOpen(timeoutMs = 2000){
+    return new Promise((resolve) => {
+      if (dc && dc.readyState === 'open') return resolve(true);
+      const start = Date.now();
+      const iv = setInterval(() => {
+        if (dc && dc.readyState === 'open') { clearInterval(iv); resolve(true); }
+        else if (Date.now() - start > timeoutMs) { clearInterval(iv); resolve(false); }
+      }, 50);
+    });
+  }
+  async function requestSpeak(){
+    if (!dc) { console.warn('[MAXNET] no data channel yet'); pendingSpeak = true; return; }
+    if (dc.readyState !== 'open') {
+      console.warn('[MAXNET] data channel not open; waiting…');
+      const ok = await waitForDCOpen(2500);
+      if (!ok) { console.warn('[MAXNET] data channel still closed after wait'); pendingSpeak = true; return; }
+    }
+    try {
       dc.send(JSON.stringify({
         type: 'response.create',
         response: {
@@ -849,9 +864,8 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         }
       }));
       console.log('[MAXNET] response.create sent');
-    } else {
-      console.warn('[MAXNET] data channel not open; deferring speak');
-      pendingSpeak = true;
+    } catch (e) {
+      console.warn('[MAXNET] response.create send error', e);
     }
   }
 
@@ -870,6 +884,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     pc = new RTCPeerConnection();
     pc.onconnectionstatechange = ()=> console.log('[MAXNET] pc.connectionState =', pc.connectionState);
     pc.oniceconnectionstatechange = ()=> console.log('[MAXNET] pc.iceConnectionState =', pc.iceConnectionState);
+    pc.onicegatheringstatechange = ()=> console.log('[MAXNET] pc.iceGatheringState =', pc.iceGatheringState);
     pc.addTransceiver('audio', { direction: 'recvonly' });
     // Play remote audio
     pc.ontrack = (ev)=>{ remoteAudio.srcObject = ev.streams[0]; };
@@ -939,8 +954,8 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
   pttBtn.addEventListener('keyup',   (e)=>{ if(e.code==='Space'){ e.preventDefault(); stopTalking();  }});
 
   // Global Spacebar shortcut when button is visible
-  document.addEventListener('keydown', (e)=>{ if(e.code==='Space' && document.activeElement!==userInput){ e.preventDefault(); if(!initialized){ initConnection(); } startTalking(); }});
-  document.addEventListener('keyup',   (e)=>{ if(e.code==='Space' && document.activeElement!==userInput){ e.preventDefault(); stopTalking(); }});
+  document.addEventListener('keydown', (e)=>{ if(e.code==='Space' && !(document.activeElement && document.activeElement.id==='userInput')){ e.preventDefault(); if(!initialized){ initConnection(); } startTalking(); }});
+  document.addEventListener('keyup',   (e)=>{ if(e.code==='Space' && !(document.activeElement && document.activeElement.id==='userInput')){ e.preventDefault(); stopTalking(); }});
 })();
 </script>
 </div>
