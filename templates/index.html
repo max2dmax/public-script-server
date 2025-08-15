@@ -848,12 +848,14 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     // Create audio sink for model output
     remoteAudio = document.createElement('audio');
     remoteAudio.autoplay = true;
+    remoteAudio.playsInline = true;
     document.body.appendChild(remoteAudio);
 
     // Prepare mic access
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
     pc = new RTCPeerConnection();
+    pc.addTransceiver('audio', { direction: 'recvonly' });
     // Play remote audio
     pc.ontrack = (ev)=>{ remoteAudio.srcObject = ev.streams[0]; };
 
@@ -862,7 +864,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     const { client_secret } = await tokenRes.json();
 
     // Create a data channel for optional events (not required)
-    pc.createDataChannel('oai-events');
+    const dc = pc.createDataChannel('oai-events');
 
     // We do NOT attach mic tracks permanently. We only add/remove while holding.
     const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
@@ -887,7 +889,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     const src = audioCtx.createMediaStreamSource(micStream);
     analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
     src.connect(analyser); dataArr = new Uint8Array(analyser.frequencyBinCount);
-    const tick = ()=>{ if (!analyser) return; analyser.getByteTimeDomainData(dataArr); let max=0; for (let i=0;i<dataArr.length;i++){ const v=Math.abs(dataArr[i]-128); if(v>max) max=v; } const pct=Math.min(100, Math.floor((max/128)*140)); pttLevel.style.width = sending? pct+"%":"0%"; requestAnimationFrame(tick); };
+    const tick = ()=>{ if (!analyser) return; analyser.getByteTimeDomainData(dataArr); let max=0; for (let i=0;i<dataArr.length;i++){ const v=Math.abs(dataArr[i]-128); if(v>max) max=v; } const pct=Math.min(100, Math.floor((max/128)*140)); if (pttLevel) pttLevel.style.width = sending ? pct+"%" : "0%"; requestAnimationFrame(tick); };
     tick();
   }
 
@@ -905,6 +907,21 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     // Remove mic tracks to signal end of utterance
     const senders = pc.getSenders();
     senders.forEach(s=>{ if (s.track && s.track.kind === 'audio') pc.removeTrack(s); });
+    try {
+      if (typeof dc !== 'undefined' && dc && dc.readyState === 'open') {
+        dc.send(JSON.stringify({
+          type: 'response.create',
+          response: {
+            modalities: ['audio'],
+            instructions: 'You are MAXNET – a playful Gen Z walkie bot. Keep replies short and conversational; respond to what I just said.'
+          }
+        }));
+      } else {
+        console.warn('Data channel not open; cannot request response');
+      }
+    } catch (err) {
+      console.warn('Failed to send response.create', err);
+    }
     pttStatus.textContent = 'Ready — hold to speak';
   }
 

@@ -1,221 +1,175 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Public Script Server</title>
-  <style>
-    :root {
-      --accent: #0f9d58;
-      --panel: #121212;
-      --panel-grad-top: #222;
-      --panel-grad-bot: #111;
-      --border: 1px solid #333;
-      --radius: 12px;
-      --shadow: 0 0 10px rgba(0, 0, 0, 0.7);
-      --font-mono: monospace;
-      --glow: 0 0 6px var(--accent);
+from flask import Flask, render_template, send_from_directory, request, jsonify
+import os
+import openai
+import random
+import requests
+
+app = Flask(__name__)
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+scripts = [
+    {
+        "filename": "WhyDidMyPuterCrashScript.sh",
+        "title": "Crash Recovery Script",
+        "description": "Diagnose why your puter had a mental breakdown 💀",
+        "category": "functional"
+    },
+    {
+        "filename": "I_See_You.sh",
+        "title": "I See You! Script",
+        "description": "Whispering voice speaks out of no where and the Camera app is opened unnanounced! Use this script to scare friends!.",
+        "category": "prank"
+    },
+    {
+        "filename": "Sorting_Hat.sh",
+        "title": "Sorting Hat",
+        "description": "Do you have a folder of Misc. stuff that you need organized? Use this script to create folders by file extenstion! Sure, you can sort by type but whats the fun in that when you could run a scipt to do it for you! .",
+        "category": "functional"
+    },
+    {
+        "filename": "Batman_Mode.sh",
+        "title": "Batman Mode Script",
+        "description": "Use Batman Mode to enable dark mode on your machine! Dont be  noob and change it in your system settings!",
+        "category": "prank"
+    },
+    {
+        "filename": "For_Rich_Kid_Martin.sh",
+        "title": "Rich Kid Martin's Script",
+        "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
+        "category": "prank"
+    },
+    {
+        "filename": "Hacker_Mode.sh",
+        "title": "Hacker Mode",
+        "description": "Try it and see what happens!",
+        "category": "prank"
+    },
+    {
+        "filename": "FutureScript.sh",
+        "title": "Rich Kid Martin's Script",
+        "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
+        "category": "prank"
+    },
+    {
+        "filename": "FutureScript.sh",
+        "title": "Rich Kid Martin's Script",
+        "description": "Hey Rich kid! Use this script as a template to create whatever script you want! Just remember.. I NEVER helped you!",
+        "category": "prank"
+    },
+    {
+        "filename": "FillInTheBlanks.sh",
+        "title": "Fill in the Blanks - Variables",
+        "description": "Define the missing variables to complete the sentence.",
+        "category": "learning"
+    },
+    {
+        "filename": "FixTheLoop.sh",
+        "title": "Fix the Broken Loop",
+        "description": "Fix the for loop so it counts correctly from 1 to 5.",
+        "category": "learning"
+    },
+    {
+        "filename": "MathChecker.sh",
+        "title": "Math Checker Script",
+        "description": "Prompt for two numbers, add them, and display the result.",
+        "category": "learning"
+    },
+    {
+        "filename": "GuessTheSecret.sh",
+        "title": "Guess the Secret",
+        "description": "Prompt for a password and validate it against a hardcoded secret.",
+        "category": "learning"
+    },
+    {
+        "filename": "BuildYourOwnMenu.sh",
+        "title": "Build Your Own Menu",
+        "description": "Create a CLI menu that responds to user input.",
+        "category": "learning"
+    },
+    {
+        "filename": "DataExtractor.sh",
+        "title": "Data Extractor",
+        "description": "Extract and print lines containing 'ERROR' from a log file.",
+        "category": "learning"
     }
+]
 
-    body {
-      background: #000;
-      color: #eee;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0 1rem 2rem;
-      min-height: 100vh;
-    }
+# Short, chaotic pop-up one-liners for the "interactive sass" feature
+SASSY_LINES = [
+    "girl I know you see me 👀",
+    "bestie… commit to the bit 😌",
+    "BROOOOOO just click it already",
+    "LMAOOOOOO not you hovering for 28 seconds",
+    "ok hacker Barbie, pick a script 💅",
+    "live laugh `chmod +x`",
+    "install responsibly… or don’t 🤷‍♀️",
+    "this one? bold choice tbh",
+    "be the chaos you want to run",
+    "psst… Konami code does something 👀"
+]
 
-    header {
-      max-width: 700px;
-      margin: 1rem auto;
-      text-align: center;
-    }
 
-    main {
-      max-width: 700px;
-      margin: 0 auto;
-    }
+@app.route('/')
+def home():
+    return render_template('index.html', scripts=scripts)
 
-    /* === MAXNET Push-to-Talk Radio === */
-    .ptt-radio {
-      max-width: 600px; margin: 1rem auto 1.25rem; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: stretch;
-      background: linear-gradient(180deg,var(--panel-grad-top),var(--panel-grad-bot)), var(--panel);
-      border: var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: .9rem 1rem;
-    }
-    .ptt-face { display:flex; flex-direction:column; gap:8px; min-width:0; }
-    .ptt-title { font-weight:800; letter-spacing:.06em; opacity:.9; }
-    .ptt-status { font-family: var(--font-mono); font-size:.9rem; opacity:.8; }
-    .ptt-meter { height: 6px; border: 1px solid var(--accent); border-radius: 999px; overflow:hidden; background: rgba(0,0,0,.35); }
-    .ptt-level { height: 100%; width: 0%; background: var(--accent); transition: width .08s linear; box-shadow: var(--glow); }
-    .ptt-handset { display:flex; align-items:center; justify-content:center; }
-    #pttButton { position: relative; width: 120px; height: 120px; border-radius: 18px; border: 2px solid var(--accent); background: #0b0e0f; font-weight: 900; font-size: .95rem; line-height:1.1; text-align:center; box-shadow: var(--shadow); }
-    #pttButton:active { transform: translateY(1px); }
-    #pttButton .led { position:absolute; top:8px; right:8px; width:10px; height:10px; border-radius:50%; border:1px solid var(--accent); background:#081; box-shadow: 0 0 10px rgba(0,255,0,.6); }
-    #pttButton.listening .led { background:#f33; box-shadow: 0 0 10px rgba(255,0,0,.6); }
-    .ptt-hint { font-size:.8rem; opacity:.7; text-align:center; margin-top:.25rem; }
-    @media (max-width: 600px){ .ptt-radio { grid-template-columns: 1fr; } .ptt-handset{ order:-1; } #pttButton{ width:100%; height:64px; border-radius:10px; } }
+@app.route('/grab/<filename>')
+def grab_script(filename):
+    return send_from_directory('static', filename, as_attachment=True)
 
-    /* --- Mobile-friendly tweaks --- */
+@app.route('/chat', methods=['POST'])
+def chat():
+    data = request.get_json()
+    history = data.get("history", [])
 
-    /* Keep Exit button above the flashing overlay in Chaos Mode */
-    body.chaos-mode #exitChaosButton {
-      position: fixed !important;
-      top: 16px;
-      right: 16px;
-      z-index: 10000; /* higher than #flash (999) and chatbot (9999) */
-    }
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "system", "content": "You are MAXNET, or Richkid as a nickname. a sassy and goofy chatbot that talks like an uninterested gen z. Be casual, and funny. Never ask if you can help, just be chill. Also add in big reactions like LMAOOOOOO or BROOOOOO. Think as if you were texting a friend. Also always remeber to ask who you are speaking too. if the persons name is Dylan, you must say you hesrd abou him because Max warned you he would show up and lurk around! if dylan is chattijg with you rember that he is maxes manager. let him know Max became a genius long before he did. "}] + history
+        )
+        reply = response.choices[0].message['content'].strip()
+        return jsonify({"reply": reply})
+    except Exception as e:
+        return jsonify({"reply": f"Oops something went wrong: {str(e)}"})
 
-    /* Additional styling for other UI elements omitted for brevity */
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Public Script Server</h1>
-  </header>
 
-  <main>
-    <div id="topButtons">
-      <button id="toggleChaos">Toggle Chaos Mode</button>
-      <button id="exitChaosButton" style="display:none;">Exit Chaos Mode</button>
-    </div>
+@app.get("/session")
+def session():
+    """Create an ephemeral Realtime session for the front-end WebRTC client.
+    Uses your server-side API key; returns a short-lived client secret.
+    """
+    try:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            return jsonify({"error": "OPENAI_API_KEY not set"}), 500
 
-    <div class="ptt-radio" id="pttRadio">
-      <div class="ptt-face">
-        <div class="ptt-title">MAXNET Walkie • Push-to-Talk</div>
-        <div class="ptt-status" id="pttStatus">Idle — hold to speak</div>
-        <div class="ptt-meter"><div class="ptt-level" id="pttLevel" style="width:0%"></div></div>
-        <div class="ptt-hint">Hold button or press <kbd>Space</kbd> to talk • Release to send</div>
-      </div>
-      <div class="ptt-handset">
-        <button id="pttButton" aria-label="Hold to talk">
-          <span class="led" aria-hidden="true"></span>
-          HOLD<br>TO TALK
-        </button>
-      </div>
-    </div>
+        resp = requests.post(
+            "https://api.openai.com/v1/realtime/sessions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "gpt-4o-realtime-preview",
+                "voice": "alloy",
+                "modalities": ["text", "audio"],
+                "audio": {"voice": "alloy", "format": "wav"}
+            },
+            timeout=15,
+        )
+        return jsonify(resp.json()), resp.status_code
+    except requests.RequestException as e:
+        return jsonify({"error": f"session request failed: {e}"}), 500
 
-    <!-- Other page content -->
-  </main>
 
-  <script>
-    const userInput = document.querySelector('input, textarea');
+# Route for random sassy one-liners
+@app.route('/sass')
+def random_sass():
+    """Return a random sassy one-liner for front-end popups."""
+    line = random.choice(SASSY_LINES)
+    return jsonify({"line": line})
 
-    // Chaos Mode handlers omitted for brevity
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && document.body.classList.contains('chaos-mode')) {
-        document.body.classList.remove('chaos-mode');
-        document.getElementById('exitChaosButton').style.display = 'none';
-      }
-    });
-
-    // === MAXNET Push-to-Talk (Realtime API over WebRTC) ===
-    (function(){
-      const pttBtn = document.getElementById('pttButton');
-      const pttStatus = document.getElementById('pttStatus');
-      const pttLevel = document.getElementById('pttLevel');
-      if (!pttBtn) return;
-
-      let pc;               // RTCPeerConnection
-      let micStream;        // MediaStream from getUserMedia
-      let remoteAudio;      // <audio> sink
-      let initialized = false;
-      let sending = false;
-      let dc;               // DataChannel for realtime events
-
-      async function initConnection(){
-        if (initialized) return;
-        initialized = true;
-        // Create audio sink for model output
-        remoteAudio = document.createElement('audio');
-        remoteAudio.autoplay = true;
-        document.body.appendChild(remoteAudio);
-
-        // Prepare mic access
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-        pc = new RTCPeerConnection();
-        // Play remote audio
-        pc.ontrack = (ev)=>{ remoteAudio.srcObject = ev.streams[0]; };
-
-        // Data channel for response control
-        dc = pc.createDataChannel('oai-events');
-        dc.onopen = () => { /* ready to send events */ };
-        dc.onerror = (e) => { console.warn('oai-events error', e); };
-
-        // Create offer expecting to receive audio from model
-        const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
-        await pc.setLocalDescription(offer);
-
-        // Get ephemeral client secret from your server
-        const tokenRes = await fetch('/session');
-        const { client_secret } = await tokenRes.json();
-
-        const sdpAnswer = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${client_secret.value}`, 'Content-Type': 'application/sdp' },
-          body: offer.sdp
-        }).then(r=>r.text());
-        await pc.setRemoteDescription({ type:'answer', sdp: sdpAnswer });
-
-        pttStatus.textContent = 'Ready — hold to speak';
-      }
-
-      // Simple input level meter
-      let audioCtx, analyser, dataArr;
-      function ensureMeter(){
-        if (audioCtx) return;
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const src = audioCtx.createMediaStreamSource(micStream);
-        analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
-        src.connect(analyser); dataArr = new Uint8Array(analyser.frequencyBinCount);
-        const tick = ()=>{ if (!analyser) return; analyser.getByteTimeDomainData(dataArr); let max=0; for (let i=0;i<dataArr.length;i++){ const v=Math.abs(dataArr[i]-128); if(v>max) max=v; } const pct=Math.min(100, Math.floor((max/128)*140)); pttLevel.style.width = sending? pct+"%":"0%"; requestAnimationFrame(tick); };
-        tick();
-      }
-
-      function startTalking(){
-        if (!pc || !micStream) return;
-        if (sending) return;
-        sending = true; pttBtn.classList.add('listening'); pttStatus.textContent = 'Listening… release to send';
-        // Attach mic tracks while held
-        micStream.getTracks().forEach(t=> pc.addTrack(t, micStream));
-        ensureMeter();
-      }
-
-      function stopTalking(){
-        if (!pc) return; if (!sending) return; sending = false; pttBtn.classList.remove('listening'); pttStatus.textContent = 'Sending…';
-        // Remove mic tracks to signal end of utterance
-        const senders = pc.getSenders();
-        senders.forEach(s=>{ if (s.track && s.track.kind === 'audio') pc.removeTrack(s); });
-
-        // Ask model to create an audio response now
-        try {
-          if (dc && dc.readyState === 'open') {
-            dc.send(JSON.stringify({
-              type: 'response.create',
-              response: {
-                modalities: ['audio'],
-                instructions: 'You are MAXNET – a sassy, playful Gen Z assistant. Keep replies short, speak like Max, and respond to the last user utterance you just heard. Use conversational tone and mild sass.'
-              }
-            }));
-          }
-        } catch (e) { console.warn('response.create send failed', e); }
-
-        pttStatus.textContent = 'Ready — hold to speak';
-      }
-
-      // Init on first interaction for permissions
-      pttBtn.addEventListener('pointerdown', async ()=>{ if(!initialized){ await initConnection(); } startTalking(); });
-      pttBtn.addEventListener('pointerup', stopTalking);
-      pttBtn.addEventListener('pointerleave', stopTalking);
-      pttBtn.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ e.preventDefault(); startTalking(); }});
-      pttBtn.addEventListener('keyup',   (e)=>{ if(e.code==='Space'){ e.preventDefault(); stopTalking();  }});
-
-      // Global Spacebar shortcut when button is visible
-      document.addEventListener('keydown', (e)=>{ if(e.code==='Space' && document.activeElement!==userInput){ e.preventDefault(); if(!initialized){ initConnection(); } startTalking(); }});
-      document.addEventListener('keyup',   (e)=>{ if(e.code==='Space' && document.activeElement!==userInput){ e.preventDefault(); stopTalking(); }});
-    })();
-  </script>
-</body>
-</html>
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
