@@ -141,9 +141,36 @@ def walkie():
         return jsonify({"error": "No audio file uploaded"}), 400
     audio_file = request.files['audio']
     try:
-        # Transcribe audio using Whisper
-        transcription = openai.Audio.transcribe("whisper-1", audio_file)
-        text = transcription['text']
+        # Transcribe audio using Whisper via HTTP (SDK versions differ; this is stable)
+        audio_bytes = audio_file.read()
+        audio_file.stream.seek(0)
+        stt_resp = requests.post(
+            "https://api.openai.com/v1/audio/transcriptions",
+            headers={
+                "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
+            },
+            files={
+                "file": (
+                    audio_file.filename or "audio.webm",
+                    io.BytesIO(audio_bytes),
+                    audio_file.mimetype or "audio/webm",
+                )
+            },
+            data={
+                "model": "whisper-1",
+                "response_format": "json",
+            },
+            timeout=60,
+        )
+        if stt_resp.status_code != 200:
+            return jsonify({
+                "error": "stt_failed",
+                "status": stt_resp.status_code,
+                "body": stt_resp.text,
+            }), 502
+        text = stt_resp.json().get("text", "").strip()
+        if not text:
+            return jsonify({"error": "no_text_from_stt"}), 502
 
         # Chat completion with same system prompt as /chat
         response = openai.ChatCompletion.create(
@@ -181,7 +208,12 @@ def walkie():
 
         return jsonify({"reply": reply_text, "audio": audio_base64})
     except Exception as e:
-        return jsonify({"error": f"Error processing audio: {str(e)}"}), 500
+        # Log the exception server-side and return a debuggable payload
+        try:
+            print("/walkie exception:", repr(e))
+        except Exception:
+            pass
+        return jsonify({"error": "walkie_exception", "message": str(e)}), 500
 
 # Route for random sassy one-liners
 @app.route('/sass')
