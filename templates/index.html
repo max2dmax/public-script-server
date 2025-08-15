@@ -132,40 +132,31 @@
             display: none;
         }
 
-        #exitChaosButton {
-            display: none;
+        /* Fixed top button bar for better mobile layout */
+        #topButtons {
+            display: none; /* revealed after boot */
+            position: fixed;
+            top: 10px;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 0 10px;
+            z-index: 10000;
+            pointer-events: none; /* container lets clicks pass except on buttons */
+        }
+        #topButtons > button {
+            position: static; /* override any legacy fixed rules */
+            pointer-events: auto;
+            white-space: nowrap;
         }
 
-        body.chaos-mode #exitChaosButton {
-            display: block !important;
-        }
+        /* Keep chaos-mode visibility logic */
+        body.chaos-mode #exitChaosButton { display: block !important; }
         body.chaos-mode #toggleButton,
-        body.chaos-mode #midnightToggleButton {
-            display: none !important;
-        }
-        #toggleButton,
-        #midnightToggleButton,
-        #exitChaosButton {
-            position: fixed;
-            background-color: #111;
-            border: 2px solid #33ff33;
-            color: #33ff33;
-            padding: 5px 10px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        #toggleButton {
-            top: 10px;
-            right: 10px;
-        }
-        #midnightToggleButton {
-            top: 10px;
-            left: 10px;
-        }
-        #exitChaosButton {
-            top: 10px;
-            left: 200px;
-        }
+        body.chaos-mode #midnightToggleButton { display: none !important; }
 
         input[type="file"] {
             display: none;
@@ -219,13 +210,16 @@
             a { font-size: 1rem; }
             details > summary { font-size: 1.1rem; padding: 0.75rem 0; }
             button, .custom-file-upload { width: 100%; margin: 0.5rem 0 0; height: 48px; line-height: 48px; font-size: 1rem; }
-            /* Top toggle buttons — make them thumb-friendly */
-            #toggleButton, #midnightToggleButton, #exitChaosButton {
-                padding: 0.6rem 0.9rem; font-size: 0.95rem; border-width: 2px;
+            /* Top toggle buttons — mobile layout */
+            #topButtons { top: 8px; gap: 8px; padding: 0 8px; justify-content: space-between; }
+            #topButtons > button {
+                flex: 1 1 auto;
+                min-width: 0;
+                padding: 0.6rem 0.7rem;
+                font-size: 0.95rem;
+                border-width: 2px;
             }
-            #toggleButton { top: 8px; right: 8px; }
-            #midnightToggleButton { top: 8px; left: 8px; }
-            #exitChaosButton { top: 8px; left: 140px; }
+            #exitChaosButton { display: none; } /* revealed by chaos-mode rule when needed */
             /* Chatbot: larger button and flexible panel */
             #chatbotContainer > #toggleChatbot { width: 64px; height: 64px; font-size: 1.4rem; }
             #chatbotContainer > #chatbotWindow { width: 90vw; height: 60vh; bottom: 76px; right: 0; }
@@ -235,9 +229,11 @@
     </style>
 </head>
 <body>
-    <button id="toggleButton">Toggle Red Alert Mode</button>
-    <button id="midnightToggleButton" style="position: fixed; top: 10px; left: 10px;">Toggle Midnight Mode</button>
-    <button id="exitChaosButton" style="position: fixed; top: 10px; left: 200px;">Exit Chaos Mode</button>
+    <div id="topButtons">
+      <button id="toggleButton">Toggle Red Alert Mode</button>
+      <button id="midnightToggleButton">Toggle Midnight Mode</button>
+      <button id="exitChaosButton">Exit Chaos Mode</button>
+    </div>
 
     <h1 id="maxnetTitle" style="text-align: center; font-size: 3rem; margin-top: 1rem;">MAXNET</h1>
 
@@ -389,6 +385,7 @@
                 document.getElementById('mainContent').classList.remove('hidden');
                 document.getElementById('bgMusic').classList.remove('hidden');
                 // Show toggle buttons after bootup is complete
+                document.getElementById('topButtons').style.display = 'flex';
                 document.getElementById('toggleButton').style.display = 'block';
                 document.getElementById('midnightToggleButton').style.display = 'block';
             }
