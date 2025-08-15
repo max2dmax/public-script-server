@@ -219,6 +219,14 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         body.chaos-mode #toggleButton,
         body.chaos-mode #midnightToggleButton { display: none !important; }
 
+        /* Keep Exit button above the flashing overlay in Chaos Mode */
+        body.chaos-mode #exitChaosButton {
+          position: fixed !important;
+          top: 16px;
+          right: 16px;
+          z-index: 10000; /* higher than #flash (999) and chatbot (9999) */
+        }
+
         input[type="file"] {
             display: none;
         }
@@ -778,6 +786,13 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     // Event listener for Exit Chaos Mode button
     const exitChaosButton = document.getElementById("exitChaosButton");
     exitChaosButton.addEventListener("click", exitChaosMode);
+
+    // Allow Esc key to exit Chaos Mode
+    document.addEventListener('keydown', function(ev){
+      if (ev.key === 'Escape' && document.body.classList.contains('chaos-mode')) {
+        exitChaosMode();
+      }
+    });
     </script>
 </div>
 
