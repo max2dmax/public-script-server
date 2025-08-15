@@ -848,6 +848,22 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
       }, 50);
     });
   }
+
+  // Wait for ICE gathering to complete (max timeoutMs ms)
+  function waitForIceGatheringComplete(pc, timeoutMs = 4000){
+    return new Promise((resolve)=>{
+      if (pc.iceGatheringState === 'complete') return resolve(true);
+      const start = Date.now();
+      const onChange = ()=>{
+        if (pc.iceGatheringState === 'complete') { cleanup(); resolve(true); }
+        else if (Date.now() - start > timeoutMs) { cleanup(); resolve(false); }
+      };
+      const cleanup = ()=>{
+        pc.removeEventListener('icegatheringstatechange', onChange);
+      };
+      pc.addEventListener('icegatheringstatechange', onChange);
+    });
+  }
   async function requestSpeak(){
     if (!dc) { console.warn('[MAXNET] no data channel yet'); pendingSpeak = true; return; }
     if (dc.readyState !== 'open') {
@@ -885,6 +901,8 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     pc.onconnectionstatechange = ()=> console.log('[MAXNET] pc.connectionState =', pc.connectionState);
     pc.oniceconnectionstatechange = ()=> console.log('[MAXNET] pc.iceConnectionState =', pc.iceConnectionState);
     pc.onicegatheringstatechange = ()=> console.log('[MAXNET] pc.iceGatheringState =', pc.iceGatheringState);
+    // Small ICE candidate log for debugging
+    pc.onicecandidate = (e)=>{ if(!e.candidate) { console.log('[MAXNET] ICE gathering complete'); } };
     pc.addTransceiver('audio', { direction: 'recvonly' });
     // Play remote audio
     pc.ontrack = (ev)=>{ remoteAudio.srcObject = ev.streams[0]; };
@@ -904,12 +922,15 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     // We do NOT attach mic tracks permanently. We only add/remove while holding.
     const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
     await pc.setLocalDescription(offer);
+    const iceOk = await waitForIceGatheringComplete(pc, 5000);
+    if (!iceOk) console.warn('[MAXNET] ICE gathering timed out; proceeding with partial candidates');
 
+    const local = pc.localDescription;
     const base = 'https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview';
     const sdpAnswer = await fetch(base, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${client_secret.value}`, 'Content-Type': 'application/sdp' },
-      body: offer.sdp
+      body: local.sdp
     }).then(r=>r.text());
     await pc.setRemoteDescription({ type:'answer', sdp: sdpAnswer });
 
