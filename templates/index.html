@@ -26,6 +26,8 @@
 
   --font-sans: ui-sans-serif, system-ui, Inter, "SF Pro", Arial;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --buttons-width: 560px;
+  --content-width: 600px;
 }
 
 body.midnight-mode { --accent: var(--accent-2); --text: #efe6ff; --muted: #cdbcf5; }
@@ -194,8 +196,9 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         #topButtons {
             display: none; /* revealed after boot */
             position: static;
-            margin: 0.5rem auto 0;
-            max-width: 920px;
+            margin: 0.75rem auto 1.25rem;
+            max-width: var(--buttons-width);
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -204,6 +207,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
             z-index: 1;
             pointer-events: auto;
         }
+        #mainContent { max-width: var(--content-width) !important; margin: 0 auto; }
         #topButtons > button {
             position: static; /* override any legacy fixed rules */
             pointer-events: auto;
@@ -279,7 +283,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
             details > summary::after { min-width: 20px; height: 20px; font-size: .75em; }
             button, .custom-file-upload { width: 100%; margin: 0.5rem 0 0; height: 48px; line-height: 48px; font-size: 1rem; }
             /* Top toggle buttons — mobile layout */
-            #topButtons { margin-top: .5rem; padding: 0 8px; justify-content: space-between; flex-wrap: wrap; }
+            #topButtons { max-width: 100%; margin-bottom: .75rem; margin-top: .5rem; padding: 0 8px; justify-content: space-between; flex-wrap: wrap; }
             #topButtons > button { flex: 1 1 calc(50% - 8px); }
             #exitChaosButton { display: none; } /* revealed by chaos-mode rule when needed */
             /* Chatbot: larger button and flexible panel */
@@ -287,6 +291,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
             #chatbotContainer > #chatbotWindow { width: 90vw; height: 60vh; bottom: 76px; right: 0; }
             /* Rain and effects lighter on mobile */
             .raindrop { height: 60px; }
+            #mainContent { max-width: 100% !important; }
           }
     </style>
 </head>
