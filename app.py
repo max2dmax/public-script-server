@@ -5,6 +5,8 @@ import random
 import requests
 import base64
 import io
+import time
+from typing import Optional
 
 app = Flask(__name__)
 
@@ -123,10 +125,17 @@ MAXNET_SYS_PROMPT = (
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID")  # set this in your env
 
+# --- TTS behavior ---
+ELEVENLABS_TIMEOUT = int(os.getenv("ELEVENLABS_TIMEOUT", "60"))
+ELEVENLABS_RETRIES = int(os.getenv("ELEVENLABS_RETRIES", "2"))
+OPENAI_TTS_VOICE = os.getenv("OPENAI_TTS_VOICE", "alloy")
+OPENAI_TTS_MODEL = os.getenv("OPENAI_TTS_MODEL", "gpt-4o-mini-tts")
+
+
 
 def elevenlabs_tts_bytes(text: str) -> bytes:
     """Return MP3 bytes synthesized by ElevenLabs for the given text.
-    Requires ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID to be set in env.
+    Retries on transient errors. Requires ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID.
     """
     if not ELEVENLABS_API_KEY:
         raise RuntimeError("Missing ELEVENLABS_API_KEY env var")
@@ -141,19 +150,54 @@ def elevenlabs_tts_bytes(text: str) -> bytes:
     }
     payload = {
         "text": text,
-        # Feel free to tweak these to taste; these defaults keep your cloned voice natural
         "voice_settings": {
             "stability": 0.5,
             "similarity_boost": 0.8,
-            # "style": 0.0,  # optional
-            # "use_speaker_boost": True,
         },
-        # You can also pass "model_id" if your account uses a specific TTS model
     }
 
+    last_err = None
+    for attempt in range(1, ELEVENLABS_RETRIES + 2):  # e.g., 1 + retries
+        try:
+            resp = requests.post(url, headers=headers, json=payload, timeout=ELEVENLABS_TIMEOUT)
+            if resp.status_code == 200 and resp.content:
+                return resp.content
+            # Handle known transient codes
+            if resp.status_code in (408, 429, 500, 502, 503, 504):
+                last_err = RuntimeError(f"ElevenLabs TTS transient {resp.status_code}: {resp.text[:200]}")
+                time.sleep(min(2 * attempt, 6))
+                continue
+            # Non-retryable
+            raise RuntimeError(f"ElevenLabs TTS failed: {resp.status_code} {resp.text[:400]}")
+        except requests.RequestException as e:
+            last_err = e
+            time.sleep(min(2 * attempt, 6))
+            continue
+    # If we get here, give the caller the last error
+    raise RuntimeError(str(last_err) if last_err else "ElevenLabs TTS unknown failure")
+
+
+# --- OpenAI TTS fallback ---
+def openai_tts_bytes(text: str) -> bytes:
+    """Fallback TTS using OpenAI's speech endpoint. Returns MP3 bytes."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("Missing OPENAI_API_KEY env var for TTS fallback")
+    url = "https://api.openai.com/v1/audio/speech"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg",
+    }
+    payload = {
+        "model": OPENAI_TTS_MODEL,
+        "voice": OPENAI_TTS_VOICE,
+        "input": text,
+        # You can optionally set format/response options here
+    }
     resp = requests.post(url, headers=headers, json=payload, timeout=60)
-    if resp.status_code != 200:
-        raise RuntimeError(f"ElevenLabs TTS failed: {resp.status_code} {resp.text}")
+    if resp.status_code != 200 or not resp.content:
+        raise RuntimeError(f"OpenAI TTS failed: {resp.status_code} {resp.text[:400]}")
     return resp.content
 
 @app.route('/')
@@ -171,6 +215,7 @@ def chat():
 
     try:
         response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": MAXNET_SYS_PROMPT}
             ] + history
@@ -233,20 +278,41 @@ def walkie():
         )
         reply_text = response.choices[0].message['content'].strip()
 
-        # --- Synthesize speech using ElevenLabs ---
+        # --- Synthesize speech (try ElevenLabs, then fallback to OpenAI) ---
+        tts_provider = None
+        audio_bytes: Optional[bytes] = None
         try:
             audio_bytes = elevenlabs_tts_bytes(reply_text)
-        except Exception as e:
-            return jsonify({
-                "error": "tts_failed",
-                "provider": "elevenlabs",
-                "message": str(e),
-                "reply": reply_text,
-            }), 502
+            tts_provider = "elevenlabs"
+        except Exception as e1:
+            try:
+                print("ElevenLabs failed, falling back to OpenAI TTS:", e1)
+            except Exception:
+                pass
+            try:
+                audio_bytes = openai_tts_bytes(reply_text)
+                tts_provider = "openai"
+            except Exception as e2:
+                # Return text-only but include error context so the UI can show a warning
+                return jsonify({
+                    "reply": reply_text,
+                    "transcript": text,
+                    "audio": None,
+                    "tts_provider": None,
+                    "error": "tts_failed",
+                    "messages": {
+                        "elevenlabs": str(e1),
+                        "openai": str(e2),
+                    },
+                }), 200
 
         audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
-
-        return jsonify({"reply": reply_text, "audio": audio_base64, "transcript": text})
+        return jsonify({
+            "reply": reply_text,
+            "audio": audio_base64,
+            "transcript": text,
+            "tts_provider": tts_provider,
+        })
     except Exception as e:
         # Log the exception server-side and return a debuggable payload
         try:
