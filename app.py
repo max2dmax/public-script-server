@@ -119,6 +119,43 @@ MAXNET_SYS_PROMPT = (
     "If the name Dylan appears, acknowledge he's Max's manager with a lighthearted jab that Max became a genius first."
 )
 
+# --- ElevenLabs Config ---
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID")  # set this in your env
+
+
+def elevenlabs_tts_bytes(text: str) -> bytes:
+    """Return MP3 bytes synthesized by ElevenLabs for the given text.
+    Requires ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID to be set in env.
+    """
+    if not ELEVENLABS_API_KEY:
+        raise RuntimeError("Missing ELEVENLABS_API_KEY env var")
+    if not ELEVENLABS_VOICE_ID:
+        raise RuntimeError("Missing ELEVENLABS_VOICE_ID env var")
+
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": ELEVENLABS_API_KEY,
+    }
+    payload = {
+        "text": text,
+        # Feel free to tweak these to taste; these defaults keep your cloned voice natural
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.8,
+            # "style": 0.0,  # optional
+            # "use_speaker_boost": True,
+        },
+        # You can also pass "model_id" if your account uses a specific TTS model
+    }
+
+    resp = requests.post(url, headers=headers, json=payload, timeout=60)
+    if resp.status_code != 200:
+        raise RuntimeError(f"ElevenLabs TTS failed: {resp.status_code} {resp.text}")
+    return resp.content
+
 @app.route('/')
 def home():
     return render_template('index.html', scripts=scripts)
@@ -196,30 +233,17 @@ def walkie():
         )
         reply_text = response.choices[0].message['content'].strip()
 
-        # Synthesize speech using TTS (via HTTP to avoid SDK version issues)
-        tts_response = requests.post(
-            "https://api.openai.com/v1/audio/speech",
-            headers={
-                "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "gpt-4o-mini-tts",  # or "tts-1" if preferred
-                "voice": "alloy",
-                "input": reply_text,
-                "format": "mp3",
-            },
-            timeout=60,
-        )
-        if tts_response.status_code != 200:
+        # --- Synthesize speech using ElevenLabs ---
+        try:
+            audio_bytes = elevenlabs_tts_bytes(reply_text)
+        except Exception as e:
             return jsonify({
                 "error": "tts_failed",
-                "status": tts_response.status_code,
-                "body": tts_response.text,
+                "provider": "elevenlabs",
+                "message": str(e),
                 "reply": reply_text,
             }), 502
 
-        audio_bytes = tts_response.content
         audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
 
         return jsonify({"reply": reply_text, "audio": audio_base64, "transcript": text})
