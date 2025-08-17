@@ -349,6 +349,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
       </div>
     </div>
 
+    <audio id="maxnetVoice" playsinline></audio>
     <audio id="alarm" class="hidden" preload="auto">
         <source src="{{ url_for('static', filename='audio/Red_Alert.mp3') }}" type="audio/mpeg">
     </audio>
@@ -836,10 +837,16 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
   const pttBtn = document.getElementById('pttButton');
   const pttStatus = document.getElementById('pttStatus');
   const pttLevel = document.getElementById('pttLevel');
+  const voiceEl = document.getElementById('maxnetVoice');
   if (!pttBtn) return;
 
   let mediaRecorder; let chunks = []; let micStream; let recording = false; let pressAt = 0; let busy = false; const MIN_MS = 900;
   let audioCtx, analyser, dataArr, meterRAF;
+
+  // iOS/Safari: unlock audio on first user gesture
+  document.body.addEventListener('touchend', () => {
+    try { voiceEl.play().catch(()=>{}); } catch(_) {}
+  }, { once: true });
 
   async function ensureMic(){
     if (micStream) return;
@@ -866,7 +873,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
   function stopMeter(){ if (meterRAF) cancelAnimationFrame(meterRAF); if (pttLevel) pttLevel.style.width = '0%'; }
 
   async function startTalking(){
-    if (busy) return;
+    if (busy || recording) return;
     try {
       await ensureMic();
     } catch (e) {
@@ -966,8 +973,19 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
           }
 
           if (data.audio) {
-            const a = new Audio('data:audio/mpeg;base64,' + data.audio);
-            a.play().catch(()=>{});
+            const bytes = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
+            const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' }));
+
+            // Pause bg sounds, play reply, then resume (uses overrideAudio defined above)
+            overrideAudio(() => {
+              try { voiceEl.pause(); } catch(_) {}
+              voiceEl.currentTime = 0;
+              voiceEl.src = url;
+              voiceEl.play().catch(()=>{});
+              return voiceEl;
+            });
+
+            voiceEl.onended = () => { try { URL.revokeObjectURL(url); } catch(_) {} };
           }
           pttStatus.textContent = 'MAXNET: ' + (data.reply || '…');
         } catch (e) {
@@ -987,8 +1005,6 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
   pttBtn.addEventListener('pointerdown', startTalking);
   pttBtn.addEventListener('pointerup', stopTalking);
   pttBtn.addEventListener('pointerleave', stopTalking);
-  pttBtn.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ e.preventDefault(); startTalking(); }});
-  pttBtn.addEventListener('keyup',   (e)=>{ if(e.code==='Space'){ e.preventDefault(); stopTalking(); }});
 
   // Global Spacebar shortcut when button is visible and input not focused
   document.addEventListener('keydown', (e)=>{ if(e.code==='Space' && !(document.activeElement && document.activeElement.id==='userInput')){ e.preventDefault(); startTalking(); }});
