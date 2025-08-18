@@ -331,37 +331,29 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
       <button id="exitChaosButton">Exit Chaos Mode</button>
     </div>
 
-    <details id="walkiePanel" class="terminal-box" style="max-width: 920px; margin: 1rem auto;">
-      <summary style="display:flex;align-items:center;gap:.6rem;">
-        <span class="cat-icon" aria-hidden="true" style="color:var(--accent);">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v10H4z"/><circle cx="8" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="16" cy="12" r="1.2"/></svg>
-        </span>
-        <strong>Talk to MAXNET</strong>
-      </summary>
-      <div class="ptt-radio" id="pttRadio" style="margin-top:.8rem;">
-        <div class="ptt-face">
-          <div class="ptt-title">Walkie • Hold <span class="kbd-badge">Space</span> to talk</div>
-          <div class="ptt-status" id="pttStatus">Idle — press and hold Space</div>
-          <div class="ptt-transcript" id="pttTranscript" style="font-family: var(--font-mono); font-size:.85rem; opacity:.9; word-break: break-word; display:none;">
-            <strong>You said:</strong> <span id="pttTranscriptText"></span>
-          </div>
-          <div class="ptt-meter"><div class="ptt-level" id="pttLevel" style="width:0%"></div></div>
-          <div class="ptt-hint">Tip: keep holding until you finish speaking, then release</div>
-          <!-- Persona Selector for Walkie -->
-          <div id="personaRow" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <label for="personaSelect" style="font-weight:700; opacity:.85;">Persona:</label>
-            <select id="personaSelect" style="flex:1; min-width:140px; background: var(--panel); color: var(--text); border: 1.5px solid var(--accent); border-radius: 8px; padding: .35rem .5rem; font-family: var(--font-mono); font-weight:700;"></select>
-            <input id="personaKey" type="password" placeholder="Secret key for ELISSATRON" style="flex:1; min-width:200px; background:#000; color:var(--text); border:1.5px solid var(--accent); border-radius:8px; padding:.35rem .5rem; display:none;" />
-          </div>
+    <div class="ptt-radio" id="pttRadio">
+      <div class="ptt-face">
+        <div class="ptt-title">MAXNET Walkie • Push‑to‑Talk</div>
+        <div class="ptt-status" id="pttStatus">Idle — hold to speak</div>
+        <div class="ptt-transcript" id="pttTranscript" style="font-family: var(--font-mono); font-size:.85rem; opacity:.9; word-break: break-word; display:none;">
+          <strong>You said:</strong> <span id="pttTranscriptText"></span>
         </div>
-        <div class="ptt-decor">
-          <div class="ptt-led" id="pttLED" aria-hidden="true"></div>
-          <div class="eq" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span>
-          </div>
+        <div class="ptt-meter"><div class="ptt-level" id="pttLevel" style="width:0%"></div></div>
+        <div class="ptt-hint">Hold button or press <kbd>Space</kbd> to talk • Release to send</div>
+        <!-- Persona Selector for Walkie -->
+        <div id="personaRow" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <label for="personaSelect" style="font-weight:700; opacity:.85;">Persona:</label>
+          <select id="personaSelect" style="flex:1; min-width:140px; background: var(--panel); color: var(--text); border: 1.5px solid var(--accent); border-radius: 8px; padding: .35rem .5rem; font-family: var(--font-mono); font-weight:700;"></select>
+          <input id="personaKey" type="password" placeholder="Secret key for ELISSATRON" style="flex:1; min-width:200px; background:#000; color:var(--text); border:1.5px solid var(--accent); border-radius:8px; padding:.35rem .5rem; display:none;" />
         </div>
       </div>
-    </details>
+      <div class="ptt-handset">
+        <button id="pttButton" aria-label="Hold to talk">
+          <span class="led" aria-hidden="true"></span>
+          HOLD<br>TO TALK
+        </button>
+      </div>
+    </div>
 
     <audio id="maxnetVoice" playsinline></audio>
     <audio id="alarm" class="hidden" preload="auto">
