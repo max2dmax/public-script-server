@@ -308,6 +308,12 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
           color: #ffe5e5;
           box-shadow: 0 0 18px rgba(255,77,109,.45), inset 0 0 12px rgba(255,77,109,.25);
         }
+        #pttButton:hover:not(.listening) {
+          background: #0d0f12; /* keep same base background */
+          border-color: var(--accent);
+          color: var(--accent);
+          box-shadow: 0 0 12px rgba(51,255,51,.35);
+        }
         #pttButton .led { position:absolute; top:8px; right:8px; width:10px; height:10px; border-radius:50%; border:1px solid var(--accent); background:#081; box-shadow: 0 0 10px rgba(0,255,0,.6); }
         #pttButton.listening .led { background:#f33; box-shadow: 0 0 10px rgba(255,0,0,.6); }
         .ptt-hint { font-size:.8rem; opacity:.7; text-align:center; margin-top:.25rem; }
