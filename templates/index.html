@@ -331,6 +331,15 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
       <button id="exitChaosButton">Exit Chaos Mode</button>
     </div>
 
+    <details id="walkiePanel">
+      <summary><span class="cat-icon apps" aria-hidden="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1" ry="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" ry="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" ry="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" ry="1" />
+        </svg>
+      </span><strong>Talk to MAXNET</strong></summary>
     <div class="ptt-radio" id="pttRadio">
       <div class="ptt-face">
         <div class="ptt-title">MAXNET Walkie • Push‑to‑Talk</div>
@@ -354,6 +363,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
         </button>
       </div>
     </div>
+    </details>
 
     <audio id="maxnetVoice" playsinline></audio>
     <audio id="alarm" class="hidden" preload="auto">
