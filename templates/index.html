@@ -299,8 +299,15 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
           touch-action: none;               /* disable default touch gestures */
           -ms-touch-action: none;
           -webkit-tap-highlight-color: transparent;
+          transition: background-color .15s ease, box-shadow .15s ease, border-color .15s ease, color .15s ease;
         }
         #pttButton:active { transform: translateY(1px); }
+        #pttButton.listening {
+          background: #2b0000; /* deep red base */
+          border-color: var(--error);
+          color: #ffe5e5;
+          box-shadow: 0 0 18px rgba(255,77,109,.45), inset 0 0 12px rgba(255,77,109,.25);
+        }
         #pttButton .led { position:absolute; top:8px; right:8px; width:10px; height:10px; border-radius:50%; border:1px solid var(--accent); background:#081; box-shadow: 0 0 10px rgba(0,255,0,.6); }
         #pttButton.listening .led { background:#f33; box-shadow: 0 0 10px rgba(255,0,0,.6); }
         .ptt-hint { font-size:.8rem; opacity:.7; text-align:center; margin-top:.25rem; }
@@ -966,7 +973,7 @@ body.red-alert-mode { --accent: #ff5252; --text: #ffeaea; --muted: #ffc0c0; }
     pressAt = performance.now();
     pttBtn.classList.add('listening');
     pttStatus.textContent = 'Recording… release to send';
-    try { flashColor('#1a2', 'LISTENING'); } catch(_) {}
+    // (removed green fullscreen flash during recording)
 
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     const mimeCandidates = isSafari
