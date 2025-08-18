@@ -6,7 +6,7 @@ import requests
 import base64
 import io
 import time
-from typing import Optional
+from typing import Optional, Dict
 
 app = Flask(__name__)
 
@@ -121,9 +121,42 @@ MAXNET_SYS_PROMPT = (
     "If the name Dylan appears, acknowledge he's Max's manager with a lighthearted jab that Max became a genius first."
 )
 
+# --- Persona Config (MAXNET + locked ELISSATRON) ---
+PERSONAS: Dict[str, Dict] = {
+    "maxnet": {
+        "label": "MAXNET (default)",
+        "system_prompt": MAXNET_SYS_PROMPT,
+    },
+    "elissatron": {
+        "label": "ELISSATRON 🔒",
+        "system_prompt": (
+            "You are ELISSATRON — a hyper-competent, slightly menacing AI consigliere. "
+            "Speak with surgical clarity, dry wit, and zero fluff. Prioritize actionable steps, "
+            "offer strategic options with risks and tradeoffs, and never over-explain."
+        ),
+    },
+}
+
+def get_persona(name: str) -> Dict:
+    """Retrieve persona data by name, defaulting to maxnet."""
+    return PERSONAS.get((name or '').strip().lower(), PERSONAS["maxnet"])
+
+def persona_unlocked(name: str, supplied_key: Optional[str]) -> bool:
+    """Only ELISSATRON requires a key. Key is read from env ELISSATRON_KEY."""
+    name = (name or "").strip().lower()
+    if name != "elissatron":
+        return True
+    required = os.getenv("ELISSATRON_KEY", "richgirl").strip()
+    if not required:
+        # If no key set server-side, treat as locked (defensive)
+        return False
+    return supplied_key is not None and supplied_key.strip() == required
+
 # --- ElevenLabs Config ---
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
-ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID")  # set this in your env
+# Voice IDs per persona
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID")            # MAXNET voice (existing)
+ELISSATRON_VOICE_ID = os.getenv("ELISSATRON_VOICE_ID", "vD6rytBz9qTdqnw1EoFK")  # ELISSATRON voice (default provided)
 
 # --- TTS behavior ---
 ELEVENLABS_TIMEOUT = int(os.getenv("ELEVENLABS_TIMEOUT", "60"))
@@ -133,16 +166,16 @@ OPENAI_TTS_MODEL = os.getenv("OPENAI_TTS_MODEL", "gpt-4o-mini-tts")
 
 
 
-def elevenlabs_tts_bytes(text: str) -> bytes:
-    """Return MP3 bytes synthesized by ElevenLabs for the given text.
-    Retries on transient errors. Requires ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID.
+def elevenlabs_tts_bytes(text: str, voice_id: str) -> bytes:
+    """Return MP3 bytes synthesized by ElevenLabs for the given text using the specified voice_id.
+    Retries on transient errors. Requires ELEVENLABS_API_KEY and a valid voice_id.
     """
     if not ELEVENLABS_API_KEY:
         raise RuntimeError("Missing ELEVENLABS_API_KEY env var")
-    if not ELEVENLABS_VOICE_ID:
-        raise RuntimeError("Missing ELEVENLABS_VOICE_ID env var")
+    if not voice_id:
+        raise RuntimeError("Missing ElevenLabs voice_id")
 
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     headers = {
         "Accept": "audio/mpeg",
         "Content-Type": "application/json",
@@ -225,11 +258,33 @@ def chat():
     except Exception as e:
         return jsonify({"reply": f"Oops something went wrong: {str(e)}"})
 
+@app.route('/personas', methods=['GET'])
+def list_personas():
+    items = []
+    for key, data in PERSONAS.items():
+        locked = (key == "elissatron")
+        items.append({
+            "id": key,
+            "label": data["label"],
+            "locked": locked,
+        })
+    return jsonify({"personas": items})
+
 @app.route('/walkie', methods=['POST'])
 def walkie():
     if 'audio' not in request.files:
         return jsonify({"error": "No audio file uploaded"}), 400
     audio_file = request.files['audio']
+    selected_persona = (request.form.get("persona", "maxnet") or "maxnet").strip().lower()
+    unlock_key = request.form.get("key")
+    if not persona_unlocked(selected_persona, unlock_key):
+        return jsonify({
+            "error": "locked_persona",
+            "message": "ELISSATRON is locked. Valid secret key required.",
+            "persona": selected_persona
+        }), 403
+    persona = get_persona(selected_persona)
+    system_prompt = persona.get("system_prompt", MAXNET_SYS_PROMPT)
     try:
         # Transcribe audio using Whisper via HTTP (SDK versions differ; this is stable)
         audio_bytes = audio_file.read()
@@ -268,21 +323,25 @@ def walkie():
         if not text:
             return jsonify({"error": "no_text_from_stt"}), 502
 
-        # Chat completion with same system prompt as /chat
+        # Chat completion with selected persona system prompt
         response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": MAXNET_SYS_PROMPT},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": text}
             ]
         )
         reply_text = response.choices[0].message['content'].strip()
 
         # --- Synthesize speech (try ElevenLabs, then fallback to OpenAI) ---
+        # Choose ElevenLabs voice per persona
+        voice_id = ELEVENLABS_VOICE_ID
+        if selected_persona == "elissatron":
+            voice_id = ELISSATRON_VOICE_ID
         tts_provider = None
         audio_bytes: Optional[bytes] = None
         try:
-            audio_bytes = elevenlabs_tts_bytes(reply_text)
+            audio_bytes = elevenlabs_tts_bytes(reply_text, voice_id)
             tts_provider = "elevenlabs"
         except Exception as e1:
             try:
@@ -312,6 +371,7 @@ def walkie():
             "audio": audio_base64,
             "transcript": text,
             "tts_provider": tts_provider,
+            "persona": selected_persona,
         })
     except Exception as e:
         # Log the exception server-side and return a debuggable payload
@@ -327,6 +387,9 @@ def random_sass():
     """Return a random sassy one-liner for front-end popups."""
     line = random.choice(SASSY_LINES)
     return jsonify({"line": line})
+
+# ELISSATRON_KEY=richgirl
+# ELISSATRON_VOICE_ID=vD6rytBz9qTdqnw1EoFK
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
