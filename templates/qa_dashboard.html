@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QA Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: system-ui;
+      background: #0f0f0f;
+      color: #eaeaea;
+      padding: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🧪 QA Status</h1>
+
+<canvas id="passFailChart" width="400" height="200"></canvas>
+
+<script>
+fetch("/qa-data")
+  .then(res => res.json())
+  .then(data => {
+    const ctx = document.getElementById("passFailChart").getContext("2d");
+    new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: ["Passed", "Failed"],
+        datasets: [{
+          data: [data.passed, data.failed],
+          backgroundColor: ["#22c55e", "#ef4444"]
+        }]
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
