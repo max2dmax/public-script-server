@@ -277,9 +277,6 @@ def list_personas():
 
 @app.route('/walkie', methods=['POST'])
 def walkie():
-    if 'audio' not in request.files:
-        return jsonify({"error": "No audio file uploaded"}), 400
-    audio_file = request.files['audio']
     selected_persona = (request.form.get("persona", "maxnet") or "maxnet").strip().lower()
     unlock_key = request.form.get("key")
     if not persona_unlocked(selected_persona, unlock_key):
@@ -288,6 +285,9 @@ def walkie():
             "message": "ELISSATRON is locked. Valid secret key required.",
             "persona": selected_persona
         }), 403
+    if 'audio' not in request.files:
+        return jsonify({"error": "No audio file uploaded"}), 400
+    audio_file = request.files['audio']
     persona = get_persona(selected_persona)
     system_prompt = persona.get("system_prompt", MAXNET_SYS_PROMPT)
     try:
@@ -386,6 +386,7 @@ def walkie():
             pass
         return jsonify({"error": "walkie_exception", "message": str(e)}), 500
 
+
 # Route for random sassy one-liners
 @app.route('/sass')
 def random_sass():
@@ -393,9 +394,40 @@ def random_sass():
     line = random.choice(SASSY_LINES)
     return jsonify({"line": line})
 
+# --- QA dashboard API route ---
+@app.route("/qa-data")
+def qa_data():
+    import json
+    from pathlib import Path
+
+    report_path = Path("reports/report.json")
+    if not report_path.exists():
+        return jsonify({"error": "no_report_found"}), 404
+
+    data = json.loads(report_path.read_text())
+
+    summary = data.get("summary", {})
+    total = summary.get("total", 0)
+    passed = summary.get("passed", 0)
+    failed = summary.get("failed", 0)
+
+    pass_rate = round((passed / total) * 100, 1) if total else 0.0
+
+    return jsonify({
+        "total": total,
+        "passed": passed,
+        "failed": failed,
+        "pass_rate": pass_rate
+    })
+
+# --- QA dashboard page route ---
+@app.route("/qa-dashboard")
+def qa_dashboard():
+    return render_template("qa_dashboard.html")
+
 # ELISSATRON_KEY=richgirl
 # ELISSATRON_VOICE_ID=vD6rytBz9qTdqnw1EoFK
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port)
