@@ -1,0 +1,45 @@
+name: Nightly Tests
+
+on:
+  schedule:
+    - cron: "0 9 * * *" # 2am PT
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-json-report pytest-html
+
+      - name: Run tests + generate report
+        run: |
+          pytest \
+            --json-report \
+            --json-report-file=reports/report.json \
+            --html=reports/report.html \
+            --self-contained-html
+        env:
+          OPENAI_API_KEY: "fake-key-for-tests"
+          ELEVENLABS_API_KEY: "fake-key"
+          ELISSATRON_KEY: "richgirl"
+
+      - name: Commit updated test report
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add reports/report.json
+          git commit -m "chore: update nightly test report" || echo "No changes to commit"
+          git push
