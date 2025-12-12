@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>QA Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     body {
       font-family: system-ui;
@@ -10,18 +10,98 @@
       color: #eaeaea;
       padding: 2rem;
     }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .chart-wrap {
+      width: 180px;
+      height: 180px;
+      margin-bottom: 1.5rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+
+    .card span {
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+
+    .env {
+      background: #111;
+      border-radius: 8px;
+      padding: 1rem;
+      font-size: 0.85rem;
+      color: #ccc;
+      line-height: 1.4;
+    }
+
+    .env strong {
+      color: #fff;
+    }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>🧪 QA Dashboard</h1>
 
-<h1>🧪 QA Status</h1>
+    <div class="chart-wrap">
+      <canvas id="passFailChart" width="180" height="180"></canvas>
+    </div>
 
-<canvas id="passFailChart" width="400" height="200"></canvas>
+    <div class="stats">
+      <div class="card">
+        <h2 id="total">–</h2>
+        <span>Total Tests</span>
+      </div>
+      <div class="card">
+        <h2 id="passed">–</h2>
+        <span>Passed</span>
+      </div>
+      <div class="card">
+        <h2 id="failed">–</h2>
+        <span>Failed</span>
+      </div>
+      <div class="card">
+        <h2 id="passRate">–%</h2>
+        <span>Pass Rate</span>
+      </div>
+    </div>
+
+    <h3>Environment</h3>
+    <div class="env" id="env">
+      Loading environment info…
+    </div>
+  </div>
 
 <script>
 fetch("/qa-data")
   .then(res => res.json())
   .then(data => {
+    document.getElementById("total").textContent = data.total;
+    document.getElementById("passed").textContent = data.passed;
+    document.getElementById("failed").textContent = data.failed;
+    document.getElementById("passRate").textContent = data.pass_rate + "%";
+
     const ctx = document.getElementById("passFailChart").getContext("2d");
     new Chart(ctx, {
       type: "doughnut",
@@ -31,8 +111,24 @@ fetch("/qa-data")
           data: [data.passed, data.failed],
           backgroundColor: ["#22c55e", "#ef4444"]
         }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false }
+        }
       }
     });
+
+    if (data.environment) {
+      document.getElementById("env").innerHTML = `
+        <strong>Platform:</strong> ${data.environment.platform}<br>
+        <strong>Python:</strong> ${data.environment.python}<br>
+        <strong>CI:</strong> ${data.environment.ci ? "Yes" : "No"}
+      `;
+    } else {
+      document.getElementById("env").textContent =
+        "Environment details not available (enable metadata in qa-data route).";
+    }
   });
 </script>
 
